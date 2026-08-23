@@ -57,6 +57,8 @@ After code generation is complete:
 1. Run `black .` to ensure standard formatting.
 2. Run `pytest` to verify zero regression.
 3. If all pass, create a concise conventional commit and auto-generate PR.
+4. **Deployment Check**:
+   - Verify that Vercel Preview Build successfully triggers upon PR creation (`gh pr view --json statusCheckRollups`).
 
 ## Context & Token Optimization Protocol
 

@@ -1,0 +1,8 @@
+{
+  "autoApprove": [
+    "Bash(pytest*)",
+    "Bash(git status)",
+    "Bash(git diff*)",
+    "Bash(gh issue view*)"
+  ]
+}
