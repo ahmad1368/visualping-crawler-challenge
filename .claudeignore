@@ -1,0 +1,8 @@
+# Ignore environment and heavy directories
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.git/
+local_data/
+*.log
