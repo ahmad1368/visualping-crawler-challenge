@@ -44,6 +44,12 @@ When the user types `/next-issue`, execute the following fully automated sequenc
      `gh pr create --base staging --head feature/issue-<number> --title "feat: <issue title> (#<number>)" --body "Closes #<number>"`
    - Output the created PR URL and a short summary to the user.
 
+6. ### Command: `/build-index`
+   - Create or update `index.html` in the root directory to display crawler status and results on Vercel:
+   - 1. Generate an index.html file with a modern TailwindCSS dashboard template.
+   - 2. Include placeholders/sections for Issue Status, GitHub Workflows, and Crawler Execution Logs.
+   - 3. Save the file directly at `./index.html`.
+
 
 ## Automated Workflow Hooks
 
