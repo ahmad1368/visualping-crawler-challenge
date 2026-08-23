@@ -43,3 +43,32 @@ When the user types `/next-issue`, execute the following fully automated sequenc
    - Create a PR targeting the `staging` branch using GitHub CLI:
      `gh pr create --base staging --head feature/issue-<number> --title "feat: <issue title> (#<number>)" --body "Closes #<number>"`
    - Output the created PR URL and a short summary to the user.
+
+
+## Automated Workflow Hooks
+
+### Pre-Implementation Hook
+Before writing any code for a task:
+1. Verify clean working directory (`git status`).
+2. Run `gh issue view <id>` to lock target acceptance criteria.
+
+### Post-Implementation Hook
+After code generation is complete:
+1. Run `black .` to ensure standard formatting.
+2. Run `pytest` to verify zero regression.
+3. If all pass, create a concise conventional commit and auto-generate PR.
+4. **Deployment Check**:
+   - Verify that Vercel Preview Build successfully triggers upon PR creation (`gh pr view --json statusCheckRollups`).
+
+## Context & Token Optimization Protocol
+
+To ensure minimal context usage and optimal performance during execution:
+
+1. **Explicit File Referencing**:
+   - Always reference files directly using `@filename` syntax (e.g., `@src/config.py`) instead of instructing a full codebase scan.
+2. **Targeted Context Isolation**:
+   - Only load the specific source module and its matching test file into context for any given issue.
+3. **Session Memory Compression**:
+   - Run `/compact` proactively before switching between distinct issues to summarize past conversation history and free up token capacity.
+4. **No Binary/Large Data Scans**:
+   - Rely strictly on `.claudeignore` rules. Do not attempt to read test logs, database files, or third-party package internals.
