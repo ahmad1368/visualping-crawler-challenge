@@ -1,0 +1,571 @@
+
+================================================================================
+                               ISSUE TRACKER EXPORT
+                   Visualping Crawler & Secret Extractor
+================================================================================
+
+--------------------------------------------------------------------------------
+[Issue #1] Create Configuration Module and Constants (Config Module)
+--------------------------------------------------------------------------------
+Group: 1. Infrastructure & Config
+Order: #1
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create config.py to manage primary project settings and environment variables.
+[ ] Define Root URL, application execution port, and network timeouts.
+[ ] Define constant Regex patterns for password detection (VISUALPING{...}) and text route extraction.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #2] Design and Implement Project Data Models
+--------------------------------------------------------------------------------
+Group: 1. Infrastructure & Config
+Order: #2
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create models.py to define data models using Pydantic or Dataclasses.
+[ ] Define Secret model (including secret value, URL, location found, snippet, and timestamp).
+[ ] Define CrawledNode and Edge models to manage network graph nodes and relationships.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #3] Implement In-Memory State Manager Class
+--------------------------------------------------------------------------------
+Group: 1. Infrastructure & Config
+Order: #3
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create state.py for centralized management of crawler execution state.
+[ ] Define visited_urls set to prevent duplicate traversals and cycle formation.
+[ ] Define deque queue to implement Breadth-First Search (BFS Queue) traversal.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #4] Setup Async HTTP Client, Session, and Cookie Management
+--------------------------------------------------------------------------------
+Group: 1. Infrastructure & Config
+Order: #4
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create fetcher.py and initialize httpx.AsyncClient.
+[ ] Configure standard HTTP headers (such as User-Agent and Accept).
+[ ] Enable automatic cookie persistence and propagation (CookieJar) across all requests.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #5] Implement Automatic Retry Mechanism and Network Timeout Management
+--------------------------------------------------------------------------------
+Group: 1. Infrastructure & Config
+Order: #5
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Implement Exponential Backoff / Retry logic for failed network requests.
+[ ] Configure granular network timeouts (Connect Timeout and Read Timeout).
+[ ] Gracefully handle common network exceptions (Network Errors, 4xx, and 5xx) without interrupting execution.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #6] Implement Comprehensive Raw Network Response Object
+--------------------------------------------------------------------------------
+Group: 1. Infrastructure & Config
+Order: #6
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Define output response wrapper containing HTML Body, Response Headers, and Cookies.
+[ ] Capture request metadata (such as status_code and elapsed_time).
+[ ] Provide unified extraction methods to feed raw data cleanly into parser modules.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #7] Implement Structured HTML Link Extractor
+--------------------------------------------------------------------------------
+Group: 2. Parsers & Extractors
+Order: #7
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create link_extractor.py and parse HTML source using BeautifulSoup.
+[ ] Extract all links inside <a> tags within main content and body text.
+[ ] Normalize URLs (convert Relative URLs to Absolute URLs) and strip duplicate anchor links (#).
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #8] Implement Text and Script Regex Route Finder Engine
+--------------------------------------------------------------------------------
+Group: 2. Parsers & Extractors
+Order: #8
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Define Regex patterns to scan raw text, JS files, and code comments.
+[ ] Identify and extract hidden endpoints (e.g., relative paths embedded in JS or non-HTML text).
+[ ] Validate extracted routes and filter out non-relevant strings before adding them to the queue.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #9] Implement Link Graph Edge Tracker (Link Graph Builder)
+--------------------------------------------------------------------------------
+Group: 2. Parsers & Extractors
+Order: #9
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Track and record parent-child relationships (Source URL -> Target URL) for every discovered link.
+[ ] Create Edge data structures to maintain link graph connections.
+[ ] Prevent registering duplicate edges in memory.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #10] Implement Pattern Matching & Secret Snippet Extractor (Secret Regex Matcher)
+--------------------------------------------------------------------------------
+Group: 2. Parsers & Extractors
+Order: #10
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create secret_finder.py and define precise Regex for pattern VISUALPING{[a-fA-F0-9]{16}}.
+[ ] Implement snippet extraction logic (capturing 30 characters before and after the matched secret for context).
+[ ] Normalize and sanitize extracted matches from invisible characters or extra whitespace.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #11] Implement HTML Body and Comments Scanner
+--------------------------------------------------------------------------------
+Group: 2. Parsers & Extractors
+Order: #11
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Scan visible HTML body text to uncover explicitly rendered secrets.
+[ ] Extract and scan hidden HTML comments (<!-- ... -->).
+[ ] Record exact discovery location type (HTML Body or HTML Comment) in the Secret model instance.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #12] Implement Headers, Cookies, and Linked Assets Scanner
+--------------------------------------------------------------------------------
+Group: 2. Parsers & Extractors
+Order: #12
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Scan all HTTP response headers, specifically Set-Cookie values and custom headers.
+[ ] Scan inline scripts and content of linked JS/CSS files.
+[ ] Record exact discovery location details (Header Name or Cookie Key) along with the target URL.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #13] Implement BFS Traversal Loop Controller
+--------------------------------------------------------------------------------
+Group: 3. Crawler Core
+Order: #13
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create crawler.py and implement main processing loop (while bfs_queue).
+[ ] Check URL visitation status in visited_urls before processing to prevent infinite loops.
+[ ] Track depth levels to control and report traversal boundaries.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #14] Integrate Page Processing Pipeline
+--------------------------------------------------------------------------------
+Group: 3. Crawler Core
+Order: #14
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Connect Async Fetcher to Secret Finder and Link Extractor modules for each incoming URL.
+[ ] Invoke concurrent secret scanners (Body/Header/Cookie) and persist discovered secrets instantly.
+[ ] Append new, unique discovered links to the end of bfs_queue.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #15] Design Output JSON Schema and Report Model
+--------------------------------------------------------------------------------
+Group: 3. Crawler Core
+Order: #15
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create exporter.py and define primary JSON keys (secrets, nodes, edges, and summary).
+[ ] Structure execution metadata (start/end timestamp, total scanned pages, total secrets found).
+[ ] Implement serialization methods converting Pydantic/Dataclass models into JSON-ready dictionaries.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #16] Implement Incremental Atomic File Persistence (Atomic JSON Writer)
+--------------------------------------------------------------------------------
+Group: 3. Crawler Core
+Order: #16
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Implement incremental write functionality saving findings to local_data/results.json immediately upon discovering a new secret.
+[ ] Use Atomic Write patterns (write to temporary file and replace) to prevent file corruption during unexpected crashes.
+[ ] Handle exceptions gracefully and auto-create the local_data directory if missing.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #17] Implement Data Loader and Recovery Module
+--------------------------------------------------------------------------------
+Group: 3. Crawler Core
+Order: #17
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Implement load_results function to read and validate results.json.
+[ ] Provide structured data to HTML rendering and reporting layers.
+[ ] Gracefully handle missing or empty file scenarios to prevent runtime exceptions.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #18] Design Base HTML Template & UI using Tailwind CSS (Visualping Theme)
+--------------------------------------------------------------------------------
+Group: 4. UI & Presentation
+Order: #18
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create static template templates/template.html styled with Tailwind CSS and Lucide icons.
+[ ] Design branded Visualping header, key metrics cards (KPIs), and report data tables.
+[ ] Define template placeholders for dynamic data injection.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #19] Implement HTML Generator Engine and Dynamic Data Injector
+--------------------------------------------------------------------------------
+Group: 4. UI & Presentation
+Order: #19
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Create ui/reporter.py to process results.json and template.html.
+[ ] Inject summary metrics (secrets count, scanned pages count, crawl depth) into KPI cards.
+[ ] Render extracted secrets row-by-row in the table with snippet, URL, location details, and generate final output.html.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #20] Transform and Format Graph Data for Vis-Network (Data Formatter)
+--------------------------------------------------------------------------------
+Group: 4. UI & Presentation
+Order: #20
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Implement data transformation function converting nodes and edges from results.json into Vis-Network array structures.
+[ ] Assign node metadata including unique id, label (shortened URL), and title (full tooltip details).
+[ ] Highlight and visually flag nodes containing discovered secrets.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.
+
+
+--------------------------------------------------------------------------------
+[Issue #21] Integrate Vis-Network Library and Interactive Network UI
+--------------------------------------------------------------------------------
+Group: 4. UI & Presentation
+Order: #21
+
+-- KEY TASKS & ACCEPTABLE CRITERIA --
+[ ] Add Vis-Network CDN scripts to HTML template and build network container UI.
+[ ] Apply distinct colors and icons for normal nodes versus secret-containing nodes using Visualping branding colors.
+[ ] Enable zoom, pan, and click-to-view node details interactive features.
+[ ] Ensure 100% English inline comments and docstrings (No non-English comments in code).
+[ ] Create unit tests using pytest covering all success and failure scenarios for this module.
+
+-- REQUIRED ENGINEERING PRINCIPLES COMPLIANCE --
+1. English Code Standard:
+   - All inline comments, function docstrings, variable names, and commit messages MUST be in English.
+2. Testing & CI/CD Pipeline:
+   - Unit test files must be created under tests/ directory for every implementation scenario.
+   - GitHub Actions CI workflow must execute and PASS all pytest suites automatically before merging PRs.
+3. Architecture & Code Quality Principles:
+   - Architecture: Maintain SOLID, Decoupled/Modular Architecture, and Event-Driven/Pipeline patterns.
+   - Clean Code: Adhere to DRY, KISS, Python Type Hinting/Static Typing, and PEP 8 standards.
+   - Performance: Use Async I/O (httpx/asyncio), O(1) set/deque lookups, and isolated state.
+   - Resilience: Handle exceptions gracefully, implement Exponential Backoff/Retry, and use Atomic File Writes.
+   - Maintainability: Ensure Unit Testability, Comprehensive Logging (no raw prints), and Self-Documenting code.

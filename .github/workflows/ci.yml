@@ -1,0 +1,27 @@
+name: CI & AI Code Quality Pipeline
+
+on:
+  push:
+    branches: [ staging, main ]
+  pull_request:
+    branches: [ staging ]
+
+jobs:
+  validate-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov httpx beautifulsoup4 pydantic
+
+      - name: Run Unit Tests
+        run: |
+          pytest
