@@ -5,9 +5,9 @@ import asyncio
 import httpx
 import pytest
 
-import config
+from core import config
 from main import _parse_args, main, run_crawl
-from persistence import ResultsWriter
+from storage.persistence import ResultsWriter
 
 
 def _run(coro):
@@ -133,15 +133,16 @@ class TestMain:
     """Success and failure scenarios for the main() CLI entry point."""
 
     def test_returns_1_when_report_generation_fails(self, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-
         async def fake_run_crawl(start_url, *, max_depth=None):
             return ResultsWriter(path=tmp_path / "local_data" / "results.json")
 
         import main as main_module
 
         monkeypatch.setattr(main_module, "run_crawl", fake_run_crawl)
-        # No templates/template.html exists under tmp_path, so report
-        # generation is expected to fail gracefully.
+        # Force generate_report's failure path directly, independent of
+        # real filesystem state (ui.template.TEMPLATE_PATH is anchored to
+        # the package's own location, so it can't be made "missing" by
+        # just changing the working directory).
+        monkeypatch.setattr(main_module, "generate_report", lambda: False)
         exit_code = main(["https://example.com"])
         assert exit_code == 1
