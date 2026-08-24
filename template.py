@@ -2,9 +2,9 @@
 
 Exposes the static `templates/template.html` file — a Tailwind CSS
 (Visualping-themed) report shell with named `{{ TOKEN }}` placeholders —
-along with the exact set of placeholder tokens it defines, so a future
-dynamic data injector has a single source of truth for what it is
-expected to fill in.
+along with the exact set of placeholder tokens it defines, so the
+dynamic data injector (`ui.reporter`) has a single source of truth for
+what it is expected to fill in.
 """
 
 from __future__ import annotations
@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 TEMPLATE_PATH = Path("templates") / "template.html"
 
 # Every `{{ TOKEN }}` placeholder the template defines for dynamic data
-# injection. Kept here as the single source of truth so a future injector
-# module and this module's tests never drift out of sync with the
-# template file itself.
+# injection. Kept here as the single source of truth so ui.reporter and
+# this module's tests never drift out of sync with the template file
+# itself.
 REQUIRED_PLACEHOLDERS: tuple[str, ...] = (
     "{{ GENERATED_AT }}",
     "{{ START_TIME }}",

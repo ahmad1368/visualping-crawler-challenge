@@ -3,7 +3,7 @@
 Transforms the crawl report's `CrawledNode`/`Edge` records into the plain
 node/edge array structures vis-network expects, assigning each node a
 unique id, a shortened URL label, a full-detail tooltip title, and a
-visual highlight for any node where a secret was discovered.
+distinct color and shape for any node where a secret was discovered.
 """
 
 from __future__ import annotations
@@ -22,6 +22,12 @@ MAX_LABEL_LENGTH = 30
 # sky for every other node.
 SECRET_NODE_COLOR = "#f43f5e"
 DEFAULT_NODE_COLOR = "#38bdf8"
+
+# vis-network built-in node shapes, used as the icon distinguishing a
+# secret-containing node (a warning triangle) from a normal one (a dot),
+# so the two are told apart by silhouette as well as by color.
+SECRET_NODE_SHAPE = "triangle"
+DEFAULT_NODE_SHAPE = "dot"
 
 
 def format_graph_data(report: CrawlReport) -> dict:
@@ -53,6 +59,7 @@ def _format_node(node: CrawledNode, *, has_secret: bool) -> dict:
         "label": _shorten_url(node.url),
         "title": _build_tooltip(node, has_secret=has_secret),
         "color": SECRET_NODE_COLOR if has_secret else DEFAULT_NODE_COLOR,
+        "shape": SECRET_NODE_SHAPE if has_secret else DEFAULT_NODE_SHAPE,
     }
 
 

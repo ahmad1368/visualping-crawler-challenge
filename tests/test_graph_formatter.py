@@ -5,8 +5,10 @@ from datetime import datetime, timezone
 from exporter import build_report
 from graph_formatter import (
     DEFAULT_NODE_COLOR,
+    DEFAULT_NODE_SHAPE,
     MAX_LABEL_LENGTH,
     SECRET_NODE_COLOR,
+    SECRET_NODE_SHAPE,
     format_graph_data,
 )
 from models import CrawledNode, Edge, Secret, SecretLocation
@@ -58,6 +60,7 @@ class TestFormatGraphData:
         node = CrawledNode(url="https://example.com/page", depth=0, has_secret=True)
         data = format_graph_data(_report(nodes=[node]))
         assert data["nodes"][0]["color"] == SECRET_NODE_COLOR
+        assert data["nodes"][0]["shape"] == SECRET_NODE_SHAPE
         assert "Secret discovered" in data["nodes"][0]["title"]
 
     def test_flags_node_via_matching_secret_url(self):
@@ -75,6 +78,7 @@ class TestFormatGraphData:
         node = CrawledNode(url="https://example.com/page", depth=0)
         data = format_graph_data(_report(nodes=[node]))
         assert data["nodes"][0]["color"] == DEFAULT_NODE_COLOR
+        assert data["nodes"][0]["shape"] == DEFAULT_NODE_SHAPE
         assert "Secret discovered" not in data["nodes"][0]["title"]
 
     def test_formats_edges_with_from_and_to_keys(self):

@@ -6,6 +6,7 @@
   <title>Visualping Crawler — Security Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body class="h-full text-slate-100 antialiased">
   <div class="min-h-full">
@@ -80,8 +81,27 @@
 
       <!-- Link Graph (rendered client-side by vis-network) -->
       <section aria-labelledby="graph-heading">
-        <h2 id="graph-heading" class="text-lg font-medium mb-3">Link Graph</h2>
+        <div class="flex items-center justify-between mb-3">
+          <h2 id="graph-heading" class="text-lg font-medium">Link Graph</h2>
+          <div class="flex items-center gap-4 text-xs text-slate-400">
+            <span class="flex items-center gap-1.5">
+              <span class="inline-block w-2.5 h-2.5 rounded-full" style="background-color:#38bdf8"></span>
+              Normal page
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="triangle-alert" class="w-3.5 h-3.5" style="color:#f43f5e"></i>
+              Secret found
+            </span>
+          </div>
+        </div>
         <div id="link-graph" class="rounded-xl border border-slate-800 bg-slate-900/40 h-96"></div>
+        <p class="mt-2 text-xs text-slate-500">
+          Scroll to zoom, drag to pan, click a node for full details.
+        </p>
+        <div
+          id="node-details"
+          class="mt-3 hidden rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm whitespace-pre-wrap font-mono text-slate-300"
+        ></div>
         <script id="graph-data" type="application/json">{{ GRAPH_DATA_JSON }}</script>
       </section>
 
@@ -94,6 +114,43 @@
 
   <script>
     lucide.createIcons();
+
+    // Parse the graph data injected into the #graph-data script tag and
+    // render it as an interactive vis-network graph, if any nodes exist.
+    const graphDataElement = document.getElementById("graph-data");
+    const graphData = JSON.parse(graphDataElement.textContent || "{}");
+
+    if (graphData.nodes && graphData.nodes.length > 0) {
+      const container = document.getElementById("link-graph");
+      const nodes = new vis.DataSet(graphData.nodes);
+      const edges = new vis.DataSet(graphData.edges || []);
+
+      const network = new vis.Network(
+        container,
+        { nodes: nodes, edges: edges },
+        {
+          // Zoom (scroll wheel) and pan (click-drag) are vis-network's
+          // default interaction behavior; explicit here for clarity.
+          interaction: { zoomView: true, dragView: true, hover: true },
+          physics: { stabilization: true },
+          edges: { arrows: "to", color: { color: "#475569" } },
+        }
+      );
+
+      // Click-to-view: show the clicked node's full tooltip details
+      // (already built server-side by graph_formatter._build_tooltip)
+      // in the details panel below the graph.
+      network.on("click", function (params) {
+        const detailsPanel = document.getElementById("node-details");
+        if (params.nodes.length === 0) {
+          detailsPanel.classList.add("hidden");
+          return;
+        }
+        const node = nodes.get(params.nodes[0]);
+        detailsPanel.textContent = node.title;
+        detailsPanel.classList.remove("hidden");
+      });
+    }
   </script>
 </body>
 </html>

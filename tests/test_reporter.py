@@ -99,6 +99,33 @@ class TestRenderReport:
         assert "cookie" in rendered
 
 
+class TestGraphDataInjection:
+    """Success and failure scenarios for the GRAPH_DATA_JSON placeholder."""
+
+    def test_embeds_real_node_and_edge_data(self):
+        node_a = CrawledNode(url="https://a.com", depth=0)
+        node_b = CrawledNode(url="https://b.com", depth=1)
+        edge = Edge(source="https://a.com", target="https://b.com")
+        report = build_report(
+            secrets=[], nodes=[node_a, node_b], edges=[edge], start_time=START, end_time=END
+        )
+        rendered = render_report(report, MINIMAL_TEMPLATE)
+        assert '"https://a.com"' in rendered
+        assert '"from": "https://a.com"' in rendered
+
+    def test_embeds_empty_arrays_for_empty_report(self):
+        report = build_report(secrets=[], nodes=[], edges=[], start_time=START, end_time=END)
+        rendered = render_report(report, MINIMAL_TEMPLATE)
+        assert '"nodes": []' in rendered
+        assert '"edges": []' in rendered
+
+    def test_escapes_closing_script_tag_in_node_title(self):
+        node = CrawledNode(url="https://example.com/</script><script>alert(1)</script>", depth=0)
+        report = build_report(secrets=[], nodes=[node], edges=[], start_time=START, end_time=END)
+        rendered = render_report(report, MINIMAL_TEMPLATE)
+        assert "</script><script>alert(1)</script>" not in rendered
+
+
 class TestGenerateReport:
     """Success and failure scenarios for generate_report."""
 

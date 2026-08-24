@@ -9,11 +9,13 @@ placeholders, and atomically writes the finished page to `output.html`.
 from __future__ import annotations
 
 import html
+import json
 import logging
 from pathlib import Path
 
 from data_loader import load_results
 from exporter import CrawlReport
+from graph_formatter import format_graph_data
 from persistence import write_text_atomic
 from template import load_template
 
@@ -32,9 +34,10 @@ def render_report(report: CrawlReport, template_html: str) -> str:
 
     Fills every `{{ TOKEN }}` placeholder defined in `template.py`:
     summary KPIs (pages scanned, secrets found, links discovered, and the
-    maximum BFS depth reached, derived from `report.nodes`) and a `<tr>`
-    row per discovered secret (value, location, URL, snippet). Each
-    secret field is HTML-escaped, since it originates from crawled,
+    maximum BFS depth reached, derived from `report.nodes`), a `<tr>`
+    row per discovered secret (value, location, URL, snippet), and the
+    vis-network graph data (via `graph_formatter.format_graph_data`).
+    Each secret field is HTML-escaped, since it originates from crawled,
     untrusted page content and is otherwise inserted verbatim into the
     output page.
     """
@@ -49,7 +52,7 @@ def render_report(report: CrawlReport, template_html: str) -> str:
         "{{ TOTAL_LINKS_DISCOVERED }}": str(len(report.edges)),
         "{{ MAX_CRAWL_DEPTH }}": str(max_depth),
         "{{ SECRETS_TABLE_ROWS }}": _render_secrets_rows(report),
-        "{{ GRAPH_DATA_JSON }}": "{}",
+        "{{ GRAPH_DATA_JSON }}": _render_graph_data(report),
     }
 
     rendered = template_html
@@ -75,6 +78,17 @@ def _render_secrets_rows(report: CrawlReport) -> str:
             "</tr>"
         )
     return "\n".join(rows)
+
+
+def _render_graph_data(report: CrawlReport) -> str:
+    """Serialize the report's vis-network graph data for embedding in a <script> tag.
+
+    Escapes every `</` in the JSON output to `<\\/`, which stays valid
+    JSON (`JSON.parse` reads `\\/` back as `/`) but prevents a crawled
+    URL or tooltip title containing a literal `"</script>"` from
+    prematurely closing the surrounding script tag.
+    """
+    return json.dumps(format_graph_data(report)).replace("</", "<\\/")
 
 
 def generate_report(
