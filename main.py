@@ -7,9 +7,11 @@ traversal loop (`crawl.crawler`), the page-processing pipeline
 into a single runnable script.
 
 Usage:
-    python main.py [start_url] [--max-depth N]
+    python main.py [start_url] [--max-depth N] [--username USER --password PASS]
 
-If `start_url` is omitted, `core.config.ROOT_URL` is used.
+If `start_url` is omitted, `core.config.ROOT_URL` is used. `--username`/
+`--password` enable HTTP Basic Auth on every request, for a target that
+requires it.
 """
 
 from __future__ import annotations
@@ -49,6 +51,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help="Maximum BFS depth to crawl (default: unlimited).",
     )
+    parser.add_argument(
+        "--username",
+        default=None,
+        help="Username for HTTP Basic Auth, if the target requires it.",
+    )
+    parser.add_argument(
+        "--password",
+        default=None,
+        help="Password for HTTP Basic Auth, if the target requires it.",
+    )
     return parser.parse_args(argv)
 
 
@@ -58,6 +70,7 @@ async def run_crawl(
     max_depth: int | None = None,
     writer: ResultsWriter | None = None,
     client: httpx.AsyncClient | None = None,
+    auth: httpx.Auth | tuple[str, str] | None = None,
     max_retries: int | None = None,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> ResultsWriter:
@@ -74,10 +87,13 @@ async def run_crawl(
 
     `client` is exposed for dependency injection (e.g. tests using
     `httpx.MockTransport`); when omitted, a real client is created via
-    `fetcher.create_http_client` and closed automatically. A caller-
-    supplied `client`'s lifecycle remains the caller's responsibility.
-    `max_retries`/`sleep` are forwarded to `pipeline.build_page_processor`
-    (and from there to `retry.fetch_with_retry`), for the same reason.
+    `fetcher.create_http_client` (with `auth`, if given, for a target
+    requiring HTTP Basic Auth) and closed automatically. A caller-
+    supplied `client`'s lifecycle remains the caller's responsibility,
+    and `auth` is ignored in that case -- set it directly on the
+    supplied client instead. `max_retries`/`sleep` are forwarded to
+    `pipeline.build_page_processor` (and from there to
+    `retry.fetch_with_retry`), for the same reason.
     """
     if writer is None:
         writer = ResultsWriter()
@@ -109,7 +125,7 @@ async def run_crawl(
     if client is not None:
         await _crawl_with(client)
     else:
-        async with create_http_client() as owned_client:
+        async with create_http_client(auth=auth) as owned_client:
             await _crawl_with(owned_client)
 
     # record_secret already flushes as it goes, but a crawl that finds
@@ -131,8 +147,15 @@ def main(argv: list[str] | None = None) -> int:
 
     args = _parse_args(argv)
 
-    logger.info("Starting crawl from %s (max_depth=%s)", args.start_url, args.max_depth)
-    writer = asyncio.run(run_crawl(args.start_url, max_depth=args.max_depth))
+    auth = httpx.BasicAuth(args.username, args.password) if args.username else None
+
+    logger.info(
+        "Starting crawl from %s (max_depth=%s, auth=%s)",
+        args.start_url,
+        args.max_depth,
+        "enabled" if auth else "disabled",
+    )
+    writer = asyncio.run(run_crawl(args.start_url, max_depth=args.max_depth, auth=auth))
     logger.info(
         "Crawl finished: %d pages scanned, %d secrets found",
         writer.node_count,

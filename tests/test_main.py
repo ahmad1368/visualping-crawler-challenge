@@ -43,6 +43,18 @@ class TestParseArgs:
         with pytest.raises(SystemExit):
             _parse_args(["https://custom.example.com", "--max-depth", "not-a-number"])
 
+    def test_defaults_username_and_password_to_none(self):
+        args = _parse_args([])
+        assert args.username is None
+        assert args.password is None
+
+    def test_accepts_username_and_password_flags(self):
+        args = _parse_args(
+            ["https://custom.example.com", "--username", "alice", "--password", "secret"]
+        )
+        assert args.username == "alice"
+        assert args.password == "secret"
+
 
 class TestRunCrawl:
     """Success and failure scenarios for run_crawl."""
@@ -59,6 +71,33 @@ class TestRunCrawl:
         writer = _run(scenario())
         assert writer.node_count == 1
         assert writer.secret_count == 0
+
+    def test_forwards_auth_to_created_client_when_no_client_is_given(self, tmp_path, monkeypatch):
+        # run_crawl's `auth` only applies to a client it creates itself
+        # (when `client` is omitted); verify that wiring by faking
+        # create_http_client rather than hitting a real network client.
+        captured: dict = {}
+
+        def fake_create_http_client(transport=None, auth=None):
+            captured["auth"] = auth
+
+            def handler(request: httpx.Request) -> httpx.Response:
+                return httpx.Response(200, text="ok")
+
+            return httpx.AsyncClient(transport=httpx.MockTransport(handler))
+
+        import main as main_module
+
+        monkeypatch.setattr(main_module, "create_http_client", fake_create_http_client)
+
+        async def scenario() -> ResultsWriter:
+            writer = ResultsWriter(path=tmp_path / "results.json")
+            return await run_crawl(
+                "https://example.com", writer=writer, auth=("alice", "secret")
+            )
+
+        _run(scenario())
+        assert captured["auth"] == ("alice", "secret")
 
     def test_persists_results_file_even_when_no_secrets_are_found(self, tmp_path):
         # Regression test: run_crawl previously only relied on
@@ -158,7 +197,7 @@ class TestMain:
     """Success and failure scenarios for the main() CLI entry point."""
 
     def test_returns_1_when_report_generation_fails(self, tmp_path, monkeypatch):
-        async def fake_run_crawl(start_url, *, max_depth=None):
+        async def fake_run_crawl(start_url, *, max_depth=None, auth=None):
             return ResultsWriter(path=tmp_path / "local_data" / "results.json")
 
         import main as main_module

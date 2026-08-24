@@ -21,18 +21,26 @@ DEFAULT_HEADERS: dict[str, str] = {
 }
 
 
-def create_http_client(transport: httpx.AsyncBaseTransport | None = None) -> httpx.AsyncClient:
+def create_http_client(
+    transport: httpx.AsyncBaseTransport | None = None,
+    auth: httpx.Auth | tuple[str, str] | None = None,
+) -> httpx.AsyncClient:
     """Build an `httpx.AsyncClient` configured for crawling.
 
     The returned client applies the project's standard headers and network
     timeouts, and persists cookies across requests via its built-in cookie
     jar. `transport` is exposed for dependency injection (e.g. tests using
     `httpx.MockTransport`, or a future retry-aware transport); it defaults
-    to httpx's normal network transport when omitted.
+    to httpx's normal network transport when omitted. `auth` is forwarded
+    to `httpx.AsyncClient` as-is: pass an `(username, password)` tuple for
+    HTTP Basic Auth on every request, or any `httpx.Auth` instance for a
+    different scheme (e.g. `httpx.DigestAuth`).
 
     Callers are responsible for closing the client, e.g.:
         async with create_http_client() as client:
             ...
     """
     timeout = httpx.Timeout(config.READ_TIMEOUT, connect=config.CONNECT_TIMEOUT)
-    return httpx.AsyncClient(headers=DEFAULT_HEADERS, timeout=timeout, transport=transport)
+    return httpx.AsyncClient(
+        headers=DEFAULT_HEADERS, timeout=timeout, transport=transport, auth=auth
+    )
