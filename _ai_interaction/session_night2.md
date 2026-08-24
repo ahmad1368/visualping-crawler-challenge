@@ -187,4 +187,103 @@ Read the current log, cross-checked git log and `gh pr list`/`gh pr view` to fin
 
 ---
 
+## Prompts 14–29 — `/next-issue` runs for Issues #6–#21
+
+**User (×16, identical each time):**
+
+> excute next-issue.md in .claude\commands\next-issue.md
+
+**Assistant:**
+
+Ran the `/next-issue` workflow sixteen times in a row, each time: checked `git status`, switched to `staging` and pulled (fast-forwarding in the previous issue's merge, confirming the prior PR had already been merged outside the session each time), picked the lowest-numbered open issue, fetched its acceptance criteria via `gh issue view`, branched `feature/issue-<N>`, implemented, wrote tests, ran the full suite, committed, pushed, and opened a PR (never auto-merging). This carried the crawler from "core infrastructure" through "parsers/scanners," "crawler core," and "UI & presentation":
+
+| # | Issue | Module(s) added | Notes | Tests | PR / commit |
+|---|-------|------------------|-------|-------|--------------|
+| 6 | Raw Network Response Object | `response.py` (`RawResponse`) | `.elapsed` only populates via a real network transport, not `MockTransport`-with-preset-text — tests set it manually | 16 | [#33](https://github.com/ahmad1368/visualping-crawler-challenge/pull/33) `33042d4` |
+| 7 | Structured HTML Link Extractor | `link_extractor.py` | Normalizes/dedupes `<a href>` links via `urljoin`+`urldefrag`; installed `beautifulsoup4` locally (already in CI) | 14 | [#34](https://github.com/ahmad1368/visualping-crawler-challenge/pull/34) `2432b6e` |
+| 8 | Regex Route Finder Engine | `route_finder.py` | Reused `config.ROUTE_PATTERN` (already defined for this) instead of duplicating it | 12 | [#35](https://github.com/ahmad1368/visualping-crawler-challenge/pull/35) `2825e7e` |
+| 9 | Link Graph Edge Tracker | `link_graph.py` (`LinkGraph`) | Reused `models.Edge` (already frozen/hashable) for O(1) dedup via a `set` | 9 | [#36](https://github.com/ahmad1368/visualping-crawler-challenge/pull/36) `5356632` |
+| 10 | Secret Regex Matcher | `secret_finder.py` | Reused `config.SECRET_PATTERN`; snippet sanitization collapses whitespace/invisible chars | 13 | [#37](https://github.com/ahmad1368/visualping-crawler-challenge/pull/37) `920d75a` |
+| 11 | HTML Body and Comments Scanner | `html_scanner.py` | `soup.get_text()` already excludes `<script>`/`<style>`/comments internally — verified via inspection | 9 | [#38](https://github.com/ahmad1368/visualping-crawler-challenge/pull/38) `fc29ea2` |
+| 12 | Headers, Cookies, Linked Assets Scanner | `asset_scanner.py` | Header/cookie name embedded in scan text so it lands in the snippet automatically | 18 | [#39](https://github.com/ahmad1368/visualping-crawler-challenge/pull/39) `922124f` |
+| 13 | BFS Traversal Loop Controller | `crawler.py` (`crawl`) | Injected async `PageProcessor` callback keeps it decoupled from fetching/scanning; per-page exceptions isolated | 8 | [#40](https://github.com/ahmad1368/visualping-crawler-challenge/pull/40) `b19b334` |
+| 14 | Integrate Page Processing Pipeline | `pipeline.py` | Also hardened `response.py`'s `.elapsed` access to fall back to `0.0` instead of raising | 9 | [#41](https://github.com/ahmad1368/visualping-crawler-challenge/pull/41) `c764c12` |
+| 15 | Output JSON Schema and Report Model | `exporter.py` (`CrawlSummary`, `CrawlReport`, `build_report`) | Counts derived from list lengths, not accepted as separate args, so they can't drift | 16 | [#42](https://github.com/ahmad1368/visualping-crawler-challenge/pull/42) `ab80746` |
+| 16 | Incremental Atomic File Persistence | `persistence.py` (`write_json_atomic`, `ResultsWriter`) | Temp-file-then-`os.replace` pattern; flushes on every new secret | 12 | [#43](https://github.com/ahmad1368/visualping-crawler-challenge/pull/43) `7552095` |
+| 17 | Data Loader and Recovery Module | `data_loader.py` (`load_results`) | Always returns a schema-valid empty report rather than `None`/raising, for every recoverable failure | 7 | [#44](https://github.com/ahmad1368/visualping-crawler-challenge/pull/44) `68df190` |
+| 18 | Base HTML Template & UI (Tailwind) | `template.py`, `templates/template.html` | Static Tailwind/Lucide report shell with `{{ TOKEN }}` placeholders; flagged that visual rendering couldn't be verified (Chrome extension not connected) | 10 | [#45](https://github.com/ahmad1368/visualping-crawler-challenge/pull/45) `b8e889d` |
+| 19 | HTML Generator Engine / Dynamic Data Injector | `ui/reporter.py` | Added the missing "Max Crawl Depth" KPI card to the #18 template (acceptance criteria named 3 KPIs, template only had 2); refactored `persistence.py` to add a generic `write_text_atomic` | 10 | [#46](https://github.com/ahmad1368/visualping-crawler-challenge/pull/46) `6ffe5b1` |
+| 20 | Format Graph Data for Vis-Network | `graph_formatter.py` (`format_graph_data`) | Node `id`=URL, shortened `label`, full tooltip `title`, secret-flag color, cross-referencing both `CrawledNode.has_secret` and `report.secrets` | 13 | [#47](https://github.com/ahmad1368/visualping-crawler-challenge/pull/47) `de91641` |
+| 21 | Integrate Vis-Network Library | `templates/template.html`, `ui/reporter.py`, `graph_formatter.py` | Added CDN script, zoom/pan/click UI, legend; wired the previously-hardcoded `GRAPH_DATA_JSON: "{}"` to real data with `</script>`-breakout escaping; added a `shape` field (triangle vs. dot) for the "distinct icons" requirement | +6 | [#48](https://github.com/ahmad1368/visualping-crawler-challenge/pull/48) `e217162` |
+
+Every PR in this run was confirmed already merged into `staging` (outside the session) before the next `/next-issue` invocation began.
+
+---
+
+## Prompt 30
+
+**User:**
+
+> excute next-issue.md in .claude\commands\next-issue.md
+
+**Assistant:**
+
+`gh issue list --state open` returned empty — Issue #21 (the last one) had just been merged via PR #48. Reported that all 21 tracked issues were closed/merged and asked whether the user wanted a `main.py` entry point wired up (no issue covers that) or something else.
+
+---
+
+## Prompt 31
+
+**User:**
+
+> excute next-issue.md in .claude\commands\next-issue.md
+
+**Assistant:**
+
+Re-checked — still no open issues and no new `staging` commits. Since this was the third identical empty result in a row, used `AskUserQuestion` instead of repeating the same report again. The user chose **"Wire up main.py entry point."**
+
+Implemented `main.py`: `python main.py [start_url] [--max-depth N]`, wiring `crawler.crawl` + `pipeline.build_page_processor` + `persistence.ResultsWriter` + `ui.reporter.generate_report` into a runnable end-to-end crawl. Extended `pipeline.py` with an optional, backward-compatible `on_page_processed(url, depth, status_code, has_secret)` hook so `main.py` could record full node metadata without duplicating fetch/scan logic, and added `ResultsWriter.node_count`/`secret_count` properties (avoiding reaching into private attributes). 11 new tests in `tests/test_main.py` plus coverage additions in `test_pipeline.py`/`test_persistence.py`; full suite 255 passed. Committed (`efadf3b`), pushed `feature/main-entrypoint`, opened [PR #49](https://github.com/ahmad1368/visualping-crawler-challenge/pull/49) (no issue number, since none existed for this task). Did not merge.
+
+---
+
+## Prompt 32
+
+**User:**
+
+> excute next-issue.md in .claude\commands\next-issue.md
+
+**Assistant:**
+
+PR #49 was already merged (outside the session). Re-confirmed `gh issue list --state open` was empty and `staging` had no new commits — nothing for `/next-issue` to do. Reported this rather than starting unrequested work.
+
+---
+
+## Prompt 33
+
+**User:**
+
+> all files in solution have categurized by logic and layers, do it and change all links between files to work as befor
+
+**Assistant:**
+
+Reorganized the ~20 flat top-level modules (plus their matching test files) into six layer packages by responsibility: `core/` (config, models, state), `network/` (fetcher, retry, response), `parsers/` (link/route/secret extraction, HTML/asset scanning, link graph), `crawl/` (crawler, pipeline), `storage/` (exporter, persistence, data_loader), and `ui/` (reporter, template, graph_formatter, plus `templates/template.html` moved into `ui/templates/`). `main.py` and `conftest.py` stayed at the repo root; `tests/` mirrors the same six subfolders.
+
+Moved every file with `git mv` (git tracked them as renames, preserving history) and rewrote every import across ~40 files to match the new paths — verified with a grep sweep that no stale flat imports remained anywhere. One behavioral side effect surfaced and was fixed: `ui/template.py`'s `TEMPLATE_PATH` now resolves relative to the module's own `__file__` instead of the process's working directory (a genuine robustness improvement, verified by loading the template successfully from a working directory outside the repo), which broke one `test_main.py` test's premise (it relied on the template being "missing" via `chdir`) — fixed by monkeypatching `generate_report` directly instead.
+
+Full suite: 255 passed, no regressions. Committed (`5f85cec`), pushed `refactor/layered-architecture`, opened [PR #50](https://github.com/ahmad1368/visualping-crawler-challenge/pull/50). Did not merge — flagged as a repo-wide structural change for review rather than auto-merging.
+
+---
+
+## Prompt 34
+
+**User:**
+
+> Export our entire chat and interaction history from tonight into a file named _ai_interaction/session_night2.md.
+
+**Assistant:**
+
+Appended Prompts 14–34 above (grouping the sixteen identical `/next-issue` invocations for issues #6–#21 into one summary table, per the log's existing precedent of consolidating repetitive/uniform entries) to bring this log current with the session so far.
+
+---
+
 *This log reflects the session up to the point of export. Re-run the export to capture any further prompts.*
