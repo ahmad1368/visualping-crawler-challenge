@@ -38,6 +38,10 @@ class TestTemplateContract:
         content = load_template()
         assert "lucide" in content.lower()
 
+    def test_references_vis_network(self):
+        content = load_template()
+        assert "vis-network" in content.lower()
+
     def test_includes_visualping_branding(self):
         content = load_template()
         assert "Visualping" in content
