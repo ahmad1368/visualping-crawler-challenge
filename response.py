@@ -61,15 +61,24 @@ class RawResponse(BaseModel):
         Flattens `response.headers`/`response.cookies` into plain dicts and
         reads `response.elapsed` (time between sending the request and
         receiving the response), so downstream parser modules never need to
-        depend on `httpx` types directly.
+        depend on `httpx` types directly. `response.elapsed` is only
+        populated once a response has actually streamed through a real
+        network transport; a synthetic response (e.g. one built directly
+        for a test) never sets it, so that case falls back to 0.0 rather
+        than raising.
         """
+        try:
+            elapsed_time = response.elapsed.total_seconds()
+        except RuntimeError:
+            elapsed_time = 0.0
+
         return cls(
             url=str(response.url),
             status_code=response.status_code,
             html_body=response.text,
             headers=dict(response.headers),
             cookies=dict(response.cookies),
-            elapsed_time=response.elapsed.total_seconds(),
+            elapsed_time=elapsed_time,
         )
 
     def get_header(self, name: str, default: str | None = None) -> str | None:
