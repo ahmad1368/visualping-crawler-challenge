@@ -67,8 +67,10 @@ async def run_crawl(
     the link graph: `on_page_processed` records each visited page as a
     `CrawledNode` (url, depth, status code, whether a secret was found),
     and every link a page returns is recorded as an `Edge` before being
-    handed back to `crawler.crawl` to enqueue -- so the resulting results
-    file has full node/edge coverage, not just secrets.
+    handed back to `crawler.crawl` to enqueue. `writer.flush()` is called
+    once more after the crawl completes, so the results file has full
+    node/edge coverage even for a clean run that recorded zero secrets
+    (which otherwise triggers no write at all -- see `ResultsWriter`).
 
     `client` is exposed for dependency injection (e.g. tests using
     `httpx.MockTransport`); when omitted, a real client is created via
@@ -109,6 +111,11 @@ async def run_crawl(
     else:
         async with create_http_client() as owned_client:
             await _crawl_with(owned_client)
+
+    # record_secret already flushes as it goes, but a crawl that finds
+    # zero secrets never triggers a single write otherwise -- flush once
+    # more here so its nodes/edges are always persisted.
+    writer.flush()
 
     return writer
 

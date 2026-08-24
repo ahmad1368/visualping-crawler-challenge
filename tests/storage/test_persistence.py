@@ -105,3 +105,25 @@ class TestResultsWriter:
         writer = ResultsWriter(path=target)
         writer.record_node(CrawledNode(url="https://example.com", depth=0))
         assert target.exists() is False
+
+    def test_explicit_flush_persists_nodes_and_edges_with_zero_secrets(self, tmp_path):
+        # Regression test: a clean crawl (no secrets found) previously
+        # never wrote anything to disk at all, since only record_secret
+        # triggered a flush. A caller must be able to flush explicitly
+        # once the crawl is done.
+        target = tmp_path / "results.json"
+        writer = ResultsWriter(path=target)
+        writer.record_node(CrawledNode(url="https://example.com", depth=0))
+        writer.record_edge(
+            Edge(source="https://example.com", target="https://example.com/child")
+        )
+        assert target.exists() is False
+
+        assert writer.flush() is True
+
+        payload = json.loads(target.read_text(encoding="utf-8"))
+        assert len(payload["nodes"]) == 1
+        assert len(payload["edges"]) == 1
+        assert payload["secrets"] == []
+        assert payload["summary"]["total_pages_scanned"] == 1
+        assert payload["summary"]["total_secrets_found"] == 0

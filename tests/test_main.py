@@ -1,6 +1,7 @@
 """Unit tests for the crawl entry point: main._parse_args/run_crawl/main."""
 
 import asyncio
+import json
 
 import httpx
 import pytest
@@ -58,6 +59,30 @@ class TestRunCrawl:
         writer = _run(scenario())
         assert writer.node_count == 1
         assert writer.secret_count == 0
+
+    def test_persists_results_file_even_when_no_secrets_are_found(self, tmp_path):
+        # Regression test: run_crawl previously only relied on
+        # ResultsWriter.record_secret's implicit flush, so a crawl that
+        # found zero secrets never wrote local_data/results.json at all,
+        # leaving data_loader.load_results (and therefore the generated
+        # report) with nothing -- even though pages had actually been
+        # visited.
+        results_path = tmp_path / "results.json"
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, text="<p>Nothing sensitive here.</p>")
+
+        async def scenario() -> ResultsWriter:
+            writer = ResultsWriter(path=results_path)
+            async with _mock_client(handler) as client:
+                return await run_crawl("https://example.com", writer=writer, client=client)
+
+        _run(scenario())
+
+        assert results_path.exists()
+        payload = json.loads(results_path.read_text(encoding="utf-8"))
+        assert payload["summary"]["total_pages_scanned"] == 1
+        assert payload["summary"]["total_secrets_found"] == 0
 
     def test_follows_discovered_links_and_records_edges(self, tmp_path):
         def handler(request: httpx.Request) -> httpx.Response:
