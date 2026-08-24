@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_RESULTS_PATH = Path("local_data") / "results.json"
 
 
-def write_json_atomic(data: dict, path: Path | str = DEFAULT_RESULTS_PATH) -> bool:
-    """Atomically write `data` as JSON to `path`.
+def write_text_atomic(content: str, path: Path | str = DEFAULT_RESULTS_PATH) -> bool:
+    """Atomically write `content` as UTF-8 text to `path`.
 
     Creates `path`'s parent directory if it does not already exist.
     Writes to a temporary file in that same directory first, then
@@ -37,10 +37,9 @@ def write_json_atomic(data: dict, path: Path | str = DEFAULT_RESULTS_PATH) -> bo
     never leave `path` truncated or corrupted: it is either the previous
     complete file or the new complete file, never something in between.
 
-    Returns True on success. On any failure (e.g. a permissions error, or
-    unserializable `data`), logs the error, cleans up the temporary file,
-    and returns False rather than raising, so a single failed save never
-    crashes the crawl.
+    Returns True on success. On any failure (e.g. a permissions error),
+    logs the error, cleans up the temporary file, and returns False
+    rather than raising, so a single failed save never crashes the crawl.
     """
     path = Path(path)
 
@@ -53,14 +52,32 @@ def write_json_atomic(data: dict, path: Path | str = DEFAULT_RESULTS_PATH) -> bo
 
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as tmp_file:
-            json.dump(data, tmp_file, indent=2)
+            tmp_file.write(content)
         os.replace(tmp_path, path)
-    except (OSError, TypeError, ValueError) as exc:
-        logger.error("Failed to write results to %s: %s", path, exc)
+    except OSError as exc:
+        logger.error("Failed to write to %s: %s", path, exc)
         os.remove(tmp_path)
         return False
 
     return True
+
+
+def write_json_atomic(data: dict, path: Path | str = DEFAULT_RESULTS_PATH) -> bool:
+    """Atomically write `data` as JSON to `path`.
+
+    Serializes `data` to a JSON string first, so a serialization failure
+    (e.g. an unserializable type) is caught before anything ever touches
+    disk, then delegates to `write_text_atomic` for the actual atomic
+    write. Returns False, and logs the error, if `data` cannot be
+    serialized, rather than raising.
+    """
+    try:
+        content = json.dumps(data, indent=2)
+    except (TypeError, ValueError) as exc:
+        logger.error("Failed to serialize results for %s: %s", path, exc)
+        return False
+
+    return write_text_atomic(content, path=path)
 
 
 class ResultsWriter:

@@ -27,6 +27,7 @@ REQUIRED_PLACEHOLDERS: tuple[str, ...] = (
     "{{ TOTAL_PAGES_SCANNED }}",
     "{{ TOTAL_SECRETS_FOUND }}",
     "{{ TOTAL_LINKS_DISCOVERED }}",
+    "{{ MAX_CRAWL_DEPTH }}",
     "{{ SECRETS_TABLE_ROWS }}",
     "{{ GRAPH_DATA_JSON }}",
 )
