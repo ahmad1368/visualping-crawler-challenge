@@ -26,7 +26,7 @@
       <!-- Key Metrics (KPIs) -->
       <section aria-labelledby="kpi-heading">
         <h2 id="kpi-heading" class="text-lg font-medium mb-3">Key Metrics</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
             <div class="flex items-center gap-2 text-slate-400 text-sm">
               <i data-lucide="file-text" class="w-4 h-4"></i>
@@ -47,6 +47,13 @@
               Links Discovered
             </div>
             <p class="mt-2 text-3xl font-semibold">{{ TOTAL_LINKS_DISCOVERED }}</p>
+          </div>
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+            <div class="flex items-center gap-2 text-slate-400 text-sm">
+              <i data-lucide="layers" class="w-4 h-4"></i>
+              Max Crawl Depth
+            </div>
+            <p class="mt-2 text-3xl font-semibold">{{ MAX_CRAWL_DEPTH }}</p>
           </div>
         </div>
       </section>
