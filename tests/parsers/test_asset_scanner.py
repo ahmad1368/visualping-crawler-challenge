@@ -1,7 +1,13 @@
 """Unit tests for the headers/cookies/script scanner in asset_scanner.py."""
 
 from core.models import SecretLocation
-from parsers.asset_scanner import scan_cookies, scan_headers, scan_inline_scripts, scan_script
+from parsers.asset_scanner import (
+    extract_asset_urls,
+    scan_cookies,
+    scan_headers,
+    scan_inline_scripts,
+    scan_script,
+)
 
 SECRET = "VISUALPING{0123456789abcdef}"
 
@@ -110,3 +116,62 @@ class TestScanInlineScripts:
     def test_returns_empty_list_for_empty_html(self):
         secrets = scan_inline_scripts("", url="https://example.com")
         assert secrets == []
+
+
+class TestExtractAssetUrls:
+    """Success and failure scenarios for extract_asset_urls."""
+
+    def test_extracts_script_src(self):
+        html = '<script src="/static/js/main.js"></script>'
+        urls = extract_asset_urls(html, base_url="https://example.com")
+        assert urls == ["https://example.com/static/js/main.js"]
+
+    def test_extracts_stylesheet_link(self):
+        html = '<link rel="stylesheet" href="/static/css/style.css">'
+        urls = extract_asset_urls(html, base_url="https://example.com")
+        assert urls == ["https://example.com/static/css/style.css"]
+
+    def test_normalizes_relative_urls_to_absolute(self):
+        html = '<script src="js/app.js"></script>'
+        urls = extract_asset_urls(html, base_url="https://example.com/docs/page")
+        assert urls == ["https://example.com/docs/js/app.js"]
+
+    def test_ignores_inline_script_without_src(self):
+        html = "<script>console.log('inline');</script>"
+        urls = extract_asset_urls(html, base_url="https://example.com")
+        assert urls == []
+
+    def test_ignores_non_stylesheet_link_tags(self):
+        html = '<link rel="icon" href="/favicon.ico">'
+        urls = extract_asset_urls(html, base_url="https://example.com")
+        assert urls == []
+
+    def test_deduplicates_repeated_asset_urls(self):
+        html = (
+            '<script src="/static/js/main.js"></script>'
+            '<script src="/static/js/main.js"></script>'
+        )
+        urls = extract_asset_urls(html, base_url="https://example.com")
+        assert urls == ["https://example.com/static/js/main.js"]
+
+    def test_extracts_multiple_distinct_assets_preserving_order(self):
+        html = (
+            '<link rel="stylesheet" href="/static/css/style.css">'
+            '<script src="/static/js/main.js"></script>'
+            '<script src="/static/js/analytics.js"></script>'
+        )
+        urls = extract_asset_urls(html, base_url="https://example.com")
+        assert urls == [
+            "https://example.com/static/js/main.js",
+            "https://example.com/static/js/analytics.js",
+            "https://example.com/static/css/style.css",
+        ]
+
+    def test_returns_empty_list_for_html_with_no_assets(self):
+        html = "<body><p>No assets here.</p></body>"
+        urls = extract_asset_urls(html, base_url="https://example.com")
+        assert urls == []
+
+    def test_returns_empty_list_for_empty_html(self):
+        urls = extract_asset_urls("", base_url="https://example.com")
+        assert urls == []

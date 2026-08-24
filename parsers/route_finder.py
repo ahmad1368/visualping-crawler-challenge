@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from urllib.parse import urljoin
 
+from bs4 import BeautifulSoup, Comment
+
 from core import config
 
 # Minimum length (in characters) a matched route must have to be considered
@@ -48,6 +50,29 @@ def find_routes(text: str, base_url: str) -> list[str]:
         routes.append(absolute_url)
 
     return routes
+
+
+def find_routes_in_html(html_body: str, base_url: str) -> list[str]:
+    """Find hidden routes embedded in an HTML document's non-tag text.
+
+    `find_routes` operates on plain text; calling it directly against
+    raw HTML markup is unsafe, since HTML tags themselves can produce
+    false matches (e.g. a closing tag like `</a>` matches the route
+    pattern as `/a`, since the pattern has no way to know it is looking
+    at markup rather than a path). This wrapper first extracts the
+    document's visible body text, every inline `<script>` tag's content,
+    and every HTML comment via BeautifulSoup -- the same non-tag
+    surfaces `html_scanner`/`asset_scanner` scan for secrets -- and runs
+    `find_routes` over their combined text instead.
+    """
+    soup = BeautifulSoup(html_body, "html.parser")
+
+    script_text = "\n".join(script.get_text() for script in soup.find_all("script"))
+    comment_text = "\n".join(soup.find_all(string=lambda node: isinstance(node, Comment)))
+    body_text = soup.get_text()
+
+    combined_text = "\n".join([body_text, script_text, comment_text])
+    return find_routes(combined_text, base_url)
 
 
 def _is_relevant_route(candidate: str) -> bool:

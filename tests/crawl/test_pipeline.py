@@ -254,6 +254,108 @@ class TestOnPageProcessed:
         assert links == []
 
 
+class TestInlineScriptAndAssetScanning:
+    """Success and failure scenarios for scanning inline scripts and linked JS/CSS assets."""
+
+    def test_reports_secret_found_in_inline_script(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, text=f"<script>var t = '{BODY_SECRET}';</script>")
+
+        async def scenario():
+            sink = RecordingSink()
+            async with _client_for(handler) as client:
+                await process_page(client, "https://example.com", 0, on_secret_found=sink)
+            return sink
+
+        sink = _run(scenario())
+        assert [s.value for s in sink.secrets] == [BODY_SECRET]
+
+    def test_reports_secret_found_in_linked_js_asset(self):
+        asset_secret = "VISUALPING{349a583fba34c301}"
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if str(request.url) == "https://example.com/static/app.js":
+                return httpx.Response(200, text=f"var ADMIN = '{asset_secret}';")
+            return httpx.Response(200, text='<script src="/static/app.js"></script>')
+
+        async def scenario():
+            sink = RecordingSink()
+            async with _client_for(handler) as client:
+                await process_page(client, "https://example.com", 0, on_secret_found=sink)
+            return sink
+
+        sink = _run(scenario())
+        assert [s.value for s in sink.secrets] == [asset_secret]
+
+    def test_includes_hidden_route_found_in_page_text(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, text="<body><p>See /api/hidden-report</p></body>")
+
+        async def scenario() -> list[str]:
+            sink = RecordingSink()
+            async with _client_for(handler) as client:
+                return await process_page(client, "https://example.com", 0, on_secret_found=sink)
+
+        links = _run(scenario())
+        assert "https://example.com/api/hidden-report" in links
+
+    def test_includes_hidden_route_found_in_linked_js_asset(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            if str(request.url) == "https://example.com/static/nav.js":
+                return httpx.Response(200, text='var MENU = [{ path: "/wiki/hidden-page" }];')
+            return httpx.Response(200, text='<script src="/static/nav.js"></script>')
+
+        async def scenario() -> list[str]:
+            sink = RecordingSink()
+            async with _client_for(handler) as client:
+                return await process_page(client, "https://example.com", 0, on_secret_found=sink)
+
+        links = _run(scenario())
+        assert "https://example.com/wiki/hidden-page" in links
+
+    def test_does_not_refetch_same_asset_across_pages_sharing_a_processor(self):
+        asset_fetch_count = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal asset_fetch_count
+            if str(request.url) == "https://example.com/static/shared.js":
+                asset_fetch_count += 1
+                return httpx.Response(200, text="// shared asset, no secrets")
+            return httpx.Response(200, text='<script src="/static/shared.js"></script>')
+
+        async def scenario() -> int:
+            sink = RecordingSink()
+            async with _client_for(handler) as client:
+                processor = build_page_processor(client, sink)
+                await processor("https://example.com/a", 0)
+                await processor("https://example.com/b", 0)
+            return asset_fetch_count
+
+        count = _run(scenario())
+        assert count == 1
+
+    def test_asset_fetch_failure_does_not_break_page_processing(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            if str(request.url) == "https://example.com/static/broken.js":
+                raise httpx.ConnectError("connection refused", request=request)
+            return httpx.Response(200, text='<script src="/static/broken.js"></script>')
+
+        async def scenario() -> list[str]:
+            sink = RecordingSink()
+            async with _client_for(handler) as client:
+                return await process_page(
+                    client,
+                    "https://example.com",
+                    0,
+                    on_secret_found=sink,
+                    max_retries=0,
+                    sleep=lambda seconds: asyncio.sleep(0),
+                )
+
+        links = _run(scenario())
+        assert links == []
+
+
 class TestBuildPageProcessor:
     """Success scenarios for build_page_processor's crawler.PageProcessor adapter."""
 
