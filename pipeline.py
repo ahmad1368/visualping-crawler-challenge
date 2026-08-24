@@ -30,6 +30,12 @@ logger = logging.getLogger(__name__)
 # to the results file. May be sync or async.
 SecretSink = Callable[[Secret], Awaitable[None] | None]
 
+# Invoked once a page has finished processing, with (url, depth,
+# status_code, has_secret) -- status_code is None if the fetch failed
+# outright. Lets a caller (e.g. main.py) record full node metadata for
+# the report without duplicating the fetch/scan logic itself.
+PageProcessedCallback = Callable[[str, int, int | None, bool], None]
+
 
 async def process_page(
     client: httpx.AsyncClient,
@@ -37,6 +43,7 @@ async def process_page(
     depth: int,
     *,
     on_secret_found: SecretSink,
+    on_page_processed: PageProcessedCallback | None = None,
     max_retries: int | None = None,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> list[str]:
@@ -44,22 +51,27 @@ async def process_page(
 
     Fetches `url` through `client` (with retry/backoff via
     `retry.fetch_with_retry`). If the fetch fails outright (exhausted
-    retries after a network error), logs it and returns an empty link
-    list rather than raising, so one unreachable page never stops the
-    crawl.
+    retries after a network error), logs it, invokes `on_page_processed`
+    (if given) with a `None` status code and `has_secret=False`, and
+    returns an empty link list rather than raising, so one unreachable
+    page never stops the crawl.
 
     On any completed response, wraps it in a `RawResponse` and
     concurrently runs the body/comment, header, and cookie secret
     scanners via `asyncio.gather`, invoking `on_secret_found` for every
     `Secret` each one discovers as soon as that scanner finishes,
     satisfying the "persist secrets instantly" requirement rather than
-    batching everything until the whole page is done. Finally extracts
-    and returns the page's links via `link_extractor.extract_links`, for
-    the caller to enqueue.
+    batching everything until the whole page is done. Once all scanners
+    finish, invokes `on_page_processed` (if given) with the response's
+    status code and whether any scanner found a secret on this page.
+    Finally extracts and returns the page's links via
+    `link_extractor.extract_links`, for the caller to enqueue.
     """
     response = await fetch_with_retry(client, url, max_retries=max_retries, sleep=sleep)
     if response is None:
         logger.warning("Skipping %s at depth %d: request failed after retries", url, depth)
+        if on_page_processed is not None:
+            on_page_processed(url, depth, None, False)
         return []
 
     raw = RawResponse.from_httpx_response(response)
@@ -69,23 +81,29 @@ async def process_page(
         _scan_and_report(lambda: scan_headers(raw.headers, raw.url), on_secret_found),
         _scan_and_report(lambda: scan_cookies(raw.cookies, raw.url), on_secret_found),
     ]
-    await asyncio.gather(*scan_tasks)
+    found_by_scanner = await asyncio.gather(*scan_tasks)
+
+    if on_page_processed is not None:
+        on_page_processed(url, depth, raw.status_code, any(found_by_scanner))
 
     return extract_links(raw.html_body, raw.url)
 
 
-async def _scan_and_report(scan: Callable[[], list[Secret]], on_secret_found: SecretSink) -> None:
-    """Run a synchronous scanner function and report each secret it finds."""
-    for secret in scan():
+async def _scan_and_report(scan: Callable[[], list[Secret]], on_secret_found: SecretSink) -> bool:
+    """Run a synchronous scanner function, report each secret found, and return whether any were."""
+    secrets = scan()
+    for secret in secrets:
         result = on_secret_found(secret)
         if asyncio.iscoroutine(result):
             await result
+    return bool(secrets)
 
 
 def build_page_processor(
     client: httpx.AsyncClient,
     on_secret_found: SecretSink,
     *,
+    on_page_processed: PageProcessedCallback | None = None,
     max_retries: int | None = None,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> PageProcessor:
@@ -98,7 +116,13 @@ def build_page_processor(
 
     async def processor(url: str, depth: int) -> list[str]:
         return await process_page(
-            client, url, depth, on_secret_found=on_secret_found, max_retries=max_retries, sleep=sleep
+            client,
+            url,
+            depth,
+            on_secret_found=on_secret_found,
+            on_page_processed=on_page_processed,
+            max_retries=max_retries,
+            sleep=sleep,
         )
 
     return processor

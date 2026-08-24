@@ -168,6 +168,92 @@ class TestProcessPage:
         assert sink.secrets == []
 
 
+class RecordingPageProcessedCallback:
+    """Fake on_page_processed callback that records every call it receives."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, int, int | None, bool]] = []
+
+    def __call__(self, url: str, depth: int, status_code: int | None, has_secret: bool) -> None:
+        self.calls.append((url, depth, status_code, has_secret))
+
+
+class TestOnPageProcessed:
+    """Success and failure scenarios for the on_page_processed callback."""
+
+    def test_called_with_status_code_and_no_secret_on_clean_page(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, text="<p>Nothing sensitive here.</p>")
+
+        async def scenario():
+            callback = RecordingPageProcessedCallback()
+            async with _client_for(handler) as client:
+                await process_page(
+                    client,
+                    "https://example.com",
+                    2,
+                    on_secret_found=RecordingSink(),
+                    on_page_processed=callback,
+                )
+            return callback
+
+        callback = _run(scenario())
+        assert callback.calls == [("https://example.com", 2, 200, False)]
+
+    def test_called_with_has_secret_true_when_a_secret_is_found(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, text=f"<p>{BODY_SECRET}</p>")
+
+        async def scenario():
+            callback = RecordingPageProcessedCallback()
+            async with _client_for(handler) as client:
+                await process_page(
+                    client,
+                    "https://example.com",
+                    0,
+                    on_secret_found=RecordingSink(),
+                    on_page_processed=callback,
+                )
+            return callback
+
+        callback = _run(scenario())
+        assert callback.calls == [("https://example.com", 0, 200, True)]
+
+    def test_called_with_none_status_code_when_fetch_fails(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("connection refused", request=request)
+
+        async def scenario():
+            callback = RecordingPageProcessedCallback()
+            async with _client_for(handler) as client:
+                await process_page(
+                    client,
+                    "https://example.com",
+                    0,
+                    on_secret_found=RecordingSink(),
+                    on_page_processed=callback,
+                    max_retries=0,
+                    sleep=lambda seconds: asyncio.sleep(0),
+                )
+            return callback
+
+        callback = _run(scenario())
+        assert callback.calls == [("https://example.com", 0, None, False)]
+
+    def test_not_required_and_defaults_to_none(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, text="ok")
+
+        async def scenario() -> list[str]:
+            async with _client_for(handler) as client:
+                return await process_page(
+                    client, "https://example.com", 0, on_secret_found=RecordingSink()
+                )
+
+        links = _run(scenario())
+        assert links == []
+
+
 class TestBuildPageProcessor:
     """Success scenarios for build_page_processor's crawler.PageProcessor adapter."""
 
@@ -183,3 +269,19 @@ class TestBuildPageProcessor:
 
         links = _run(scenario())
         assert links == ["https://example.com/child"]
+
+    def test_forwards_on_page_processed_to_process_page(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, text="ok")
+
+        async def scenario():
+            callback = RecordingPageProcessedCallback()
+            async with _client_for(handler) as client:
+                processor = build_page_processor(
+                    client, RecordingSink(), on_page_processed=callback
+                )
+                await processor("https://example.com", 3)
+            return callback
+
+        callback = _run(scenario())
+        assert callback.calls == [("https://example.com", 3, 200, False)]

@@ -96,6 +96,16 @@ class ResultsWriter:
         self._edges: list[Edge] = []
         self._start_time = datetime.now(timezone.utc)
 
+    @property
+    def node_count(self) -> int:
+        """Number of visited pages recorded so far."""
+        return len(self._nodes)
+
+    @property
+    def secret_count(self) -> int:
+        """Number of secrets recorded so far."""
+        return len(self._secrets)
+
     def record_secret(self, secret: Secret) -> bool:
         """Record a newly discovered secret and persist the results file immediately."""
         self._secrets.append(secret)

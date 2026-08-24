@@ -53,6 +53,19 @@ class TestWriteJsonAtomic:
 class TestResultsWriter:
     """Success scenarios for ResultsWriter's incremental persistence."""
 
+    def test_counts_start_at_zero(self, tmp_path):
+        writer = ResultsWriter(path=tmp_path / "results.json")
+        assert writer.node_count == 0
+        assert writer.secret_count == 0
+
+    def test_node_count_and_secret_count_reflect_recorded_items(self, tmp_path):
+        writer = ResultsWriter(path=tmp_path / "results.json")
+        writer.record_node(CrawledNode(url="https://a.com", depth=0))
+        writer.record_node(CrawledNode(url="https://b.com", depth=1))
+        writer.record_secret(_secret())
+        assert writer.node_count == 2
+        assert writer.secret_count == 1
+
     def test_persists_a_secret_immediately(self, tmp_path):
         target = tmp_path / "results.json"
         writer = ResultsWriter(path=target)
