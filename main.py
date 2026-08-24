@@ -1,14 +1,15 @@
 """Command-line entry point: run a full crawl and generate the HTML report.
 
-Wires together the async HTTP client (`fetcher`), the BFS traversal loop
-(`crawler`), the page-processing pipeline (`pipeline`), incremental
-atomic persistence (`persistence`), and the HTML report generator
-(`ui.reporter`) into a single runnable script.
+Wires together the async HTTP client (`network.fetcher`), the BFS
+traversal loop (`crawl.crawler`), the page-processing pipeline
+(`crawl.pipeline`), incremental atomic persistence
+(`storage.persistence`), and the HTML report generator (`ui.reporter`)
+into a single runnable script.
 
 Usage:
     python main.py [start_url] [--max-depth N]
 
-If `start_url` is omitted, `config.ROOT_URL` is used.
+If `start_url` is omitted, `core.config.ROOT_URL` is used.
 """
 
 from __future__ import annotations
@@ -20,12 +21,12 @@ from collections.abc import Awaitable, Callable
 
 import httpx
 
-import config
-from crawler import crawl
-from fetcher import create_http_client
-from models import CrawledNode, Edge
-from persistence import ResultsWriter
-from pipeline import build_page_processor
+from core import config
+from core.models import CrawledNode, Edge
+from crawl.crawler import crawl
+from crawl.pipeline import build_page_processor
+from network.fetcher import create_http_client
+from storage.persistence import ResultsWriter
 from ui.reporter import DEFAULT_OUTPUT_PATH, generate_report
 
 logger = logging.getLogger(__name__)

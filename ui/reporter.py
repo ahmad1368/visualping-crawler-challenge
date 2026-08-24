@@ -1,9 +1,10 @@
 """HTML report generator: injects crawl results into the base template.
 
-Loads the persisted crawl results (`data_loader.load_results`) and the
-base report template (`template.load_template`), injects summary KPIs
-and a row per discovered secret into the template's `{{ TOKEN }}`
-placeholders, and atomically writes the finished page to `output.html`.
+Loads the persisted crawl results (`storage.data_loader.load_results`)
+and the base report template (`ui.template.load_template`), injects
+summary KPIs and a row per discovered secret into the template's
+`{{ TOKEN }}` placeholders, and atomically writes the finished page to
+`output.html`.
 """
 
 from __future__ import annotations
@@ -13,11 +14,11 @@ import json
 import logging
 from pathlib import Path
 
-from data_loader import load_results
-from exporter import CrawlReport
-from graph_formatter import format_graph_data
-from persistence import write_text_atomic
-from template import load_template
+from storage.data_loader import load_results
+from storage.exporter import CrawlReport
+from storage.persistence import write_text_atomic
+from ui.graph_formatter import format_graph_data
+from ui.template import load_template
 
 logger = logging.getLogger(__name__)
 
