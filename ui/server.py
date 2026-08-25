@@ -51,16 +51,34 @@ async def _cors_middleware(request: web.Request, handler):
     The generated report page is a static file and may be previewed via
     something other than this app (see module docstring), so its own
     origin won't always match this server's. Reflects the request's
-    `Origin` back as `Access-Control-Allow-Origin` when it's a plain-HTTP
-    localhost/127.0.0.1 origin (any port); every other origin is left
-    without the header, so the browser's default same-origin policy
-    still applies.
-    """
-    response = await handler(request)
+    `Origin` back as `Access-Control-Allow-Origin` (plus permissive
+    `Access-Control-Allow-Methods`/`-Headers`, for any future request
+    that does need a preflight) when it's a plain-HTTP localhost/
+    127.0.0.1 origin (any port); every other origin is left without
+    these headers, so the browser's default same-origin policy still
+    applies. Deliberately narrower than `Access-Control-Allow-Origin: *`:
+    this server can trigger a real outbound crawl (`POST /api/scan`) and
+    read scan results with no authentication, so an unrestricted origin
+    would let any website the user merely happens to visit call it
+    while it's running.
 
+    Handles `OPTIONS` itself (via the routes registered in `create_app`)
+    rather than only reacting to a successful response, since a route
+    with no matching method otherwise raises `HTTPMethodNotAllowed`
+    before this middleware would get a response to attach headers to.
+    """
     origin = request.headers.get("Origin")
-    if origin and _LOCAL_ORIGIN_PATTERN.match(origin):
+    is_local_origin = bool(origin and _LOCAL_ORIGIN_PATTERN.match(origin))
+
+    if request.method == "OPTIONS" and is_local_origin:
+        response: web.StreamResponse = web.Response(status=204)
+    else:
+        response = await handler(request)
+
+    if is_local_origin:
         response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
         response.headers["Vary"] = "Origin"
 
     return response
