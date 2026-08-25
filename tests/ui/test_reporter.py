@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from core.models import CrawledNode, Edge, Secret, SecretLocation
 from storage.exporter import build_report
 from storage.persistence import write_json_atomic
-from ui.reporter import generate_report, render_report
+from ui.reporter import build_report_payload, generate_report, render_report
 
 START = datetime(2026, 8, 23, 10, 0, 0, tzinfo=timezone.utc)
 END = datetime(2026, 8, 23, 10, 5, 0, tzinfo=timezone.utc)
@@ -124,6 +124,45 @@ class TestGraphDataInjection:
         report = build_report(secrets=[], nodes=[node], edges=[], start_time=START, end_time=END)
         rendered = render_report(report, MINIMAL_TEMPLATE)
         assert "</script><script>alert(1)</script>" not in rendered
+
+
+class TestBuildReportPayload:
+    """Success and failure scenarios for build_report_payload."""
+
+    def test_includes_kpi_fields(self):
+        report = build_report(
+            secrets=[_secret()],
+            nodes=[CrawledNode(url="https://example.com", depth=2)],
+            edges=[Edge(source="https://example.com", target="https://example.com/child")],
+            start_time=START,
+            end_time=END,
+        )
+        payload = build_report_payload(report)
+        assert payload["total_pages_scanned"] == 1
+        assert payload["total_secrets_found"] == 1
+        assert payload["total_links_discovered"] == 1
+        assert payload["max_crawl_depth"] == 2
+        assert payload["generated_at"] == END.isoformat()
+
+    def test_secret_fields_are_not_html_escaped(self):
+        secret = _secret(snippet='<script>alert("xss")</script>')
+        report = build_report(secrets=[secret], nodes=[], edges=[], start_time=START, end_time=END)
+        payload = build_report_payload(report)
+        assert payload["secrets"][0]["snippet"] == '<script>alert("xss")</script>'
+
+    def test_includes_graph_data(self):
+        node = CrawledNode(url="https://a.com", depth=0)
+        report = build_report(secrets=[], nodes=[node], edges=[], start_time=START, end_time=END)
+        payload = build_report_payload(report)
+        assert payload["graph"]["nodes"][0]["id"] == "https://a.com"
+
+    def test_empty_report_has_zeroed_fields_and_empty_lists(self):
+        report = build_report(secrets=[], nodes=[], edges=[], start_time=START, end_time=END)
+        payload = build_report_payload(report)
+        assert payload["total_pages_scanned"] == 0
+        assert payload["max_crawl_depth"] == 0
+        assert payload["secrets"] == []
+        assert payload["graph"] == {"nodes": [], "edges": []}
 
 
 class TestGenerateReport:

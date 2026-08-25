@@ -3,69 +3,281 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visualping Crawler Challenge — Dashboard</title>
+  <title>Visualping Crawler — Security Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body class="h-full text-slate-100 antialiased">
   <div class="min-h-full">
     <header class="border-b border-slate-800 bg-slate-900/60">
-      <div class="mx-auto max-w-6xl px-6 py-6">
-        <h1 class="text-2xl font-semibold tracking-tight">Visualping Crawler Challenge</h1>
-        <p class="mt-1 text-sm text-slate-400">Project status dashboard — issues, workflows, and crawler execution logs.</p>
+      <div class="mx-auto max-w-6xl px-6 py-6 flex items-center gap-3">
+        <i data-lucide="shield-alert" class="w-8 h-8 text-emerald-400"></i>
+        <div class="flex-1">
+          <h1 class="text-2xl font-semibold tracking-tight">Visualping Crawler Report</h1>
+          <p class="mt-1 text-sm text-slate-400">
+            Generated <span id="generated-at">2026-08-25T04:46:31.455851+00:00</span> — crawl window
+            <span id="start-time">2026-08-25T04:46:31.455851+00:00</span> to <span id="end-time">2026-08-25T04:46:31.455851+00:00</span>
+          </p>
+        </div>
+        <div class="text-right">
+          <button
+            id="rescan-btn"
+            type="button"
+            class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Re-scan
+          </button>
+          <p id="scan-status" class="mt-1.5 text-xs text-slate-500"></p>
+        </div>
       </div>
     </header>
 
     <main class="mx-auto max-w-6xl px-6 py-8 space-y-8">
 
-      <!-- Issue Status -->
-      <section aria-labelledby="issue-status-heading">
-        <h2 id="issue-status-heading" class="text-lg font-medium mb-3">Issue Status</h2>
-        <div class="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">
+      <!-- Key Metrics (KPIs) -->
+      <section aria-labelledby="kpi-heading">
+        <h2 id="kpi-heading" class="text-lg font-medium mb-3">Key Metrics</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+            <div class="flex items-center gap-2 text-slate-400 text-sm">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+              Pages Scanned
+            </div>
+            <p id="kpi-pages-scanned" class="mt-2 text-3xl font-semibold">0</p>
+          </div>
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+            <div class="flex items-center gap-2 text-slate-400 text-sm">
+              <i data-lucide="key-round" class="w-4 h-4"></i>
+              Secrets Found
+            </div>
+            <p id="kpi-secrets-found" class="mt-2 text-3xl font-semibold text-rose-400">0</p>
+          </div>
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+            <div class="flex items-center gap-2 text-slate-400 text-sm">
+              <i data-lucide="git-branch" class="w-4 h-4"></i>
+              Links Discovered
+            </div>
+            <p id="kpi-links-discovered" class="mt-2 text-3xl font-semibold">0</p>
+          </div>
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+            <div class="flex items-center gap-2 text-slate-400 text-sm">
+              <i data-lucide="layers" class="w-4 h-4"></i>
+              Max Crawl Depth
+            </div>
+            <p id="kpi-max-depth" class="mt-2 text-3xl font-semibold">0</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Discovered Secrets -->
+      <section aria-labelledby="secrets-heading">
+        <h2 id="secrets-heading" class="text-lg font-medium mb-3">Discovered Secrets</h2>
+        <div class="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden overflow-x-auto">
           <table class="min-w-full divide-y divide-slate-800 text-sm">
             <thead class="bg-slate-900/60 text-slate-400">
               <tr>
-                <th class="px-4 py-3 text-left font-medium">#</th>
-                <th class="px-4 py-3 text-left font-medium">Title</th>
-                <th class="px-4 py-3 text-left font-medium">Status</th>
-                <th class="px-4 py-3 text-left font-medium">PR</th>
+                <th class="px-4 py-3 text-left font-medium">Value</th>
+                <th class="px-4 py-3 text-left font-medium">Location</th>
+                <th class="px-4 py-3 text-left font-medium">URL</th>
+                <th class="px-4 py-3 text-left font-medium">Snippet</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800" id="issue-status-body">
-              <!-- Placeholder rows: replace with live data (e.g., gh issue list / GitHub API) -->
-              <tr>
-                <td class="px-4 py-3 text-slate-500" colspan="4">No issue data loaded yet.</td>
-              </tr>
+            <tbody id="secrets-table-body" class="divide-y divide-slate-800">
+              <tr><td colspan="4" class="px-4 py-3 text-slate-500">No secrets discovered.</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- GitHub Workflows -->
-      <section aria-labelledby="workflows-heading">
-        <h2 id="workflows-heading" class="text-lg font-medium mb-3">GitHub Workflows</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="workflows-grid">
-          <!-- Placeholder cards: replace with live data (e.g., GitHub Actions API) -->
-          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-            <p class="text-sm text-slate-400">Workflow</p>
-            <p class="mt-1 font-medium">—</p>
-            <p class="mt-2 text-xs text-slate-500">No run data loaded yet.</p>
+      <!-- Link Graph (rendered client-side by vis-network) -->
+      <section aria-labelledby="graph-heading">
+        <div class="flex items-center justify-between mb-3">
+          <h2 id="graph-heading" class="text-lg font-medium">Link Graph</h2>
+          <div class="flex items-center gap-4 text-xs text-slate-400">
+            <span class="flex items-center gap-1.5">
+              <span class="inline-block w-2.5 h-2.5 rounded-full" style="background-color:#38bdf8"></span>
+              Normal page
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="triangle-alert" class="w-3.5 h-3.5" style="color:#f43f5e"></i>
+              Secret found
+            </span>
           </div>
         </div>
-      </section>
-
-      <!-- Crawler Execution Logs -->
-      <section aria-labelledby="logs-heading">
-        <h2 id="logs-heading" class="text-lg font-medium mb-3">Crawler Execution Logs</h2>
-        <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-          <pre class="text-xs text-slate-400 whitespace-pre-wrap font-mono" id="crawler-logs">No execution logs loaded yet.</pre>
-        </div>
+        <div id="link-graph" class="rounded-xl border border-slate-800 bg-slate-900/40 h-96"></div>
+        <p class="mt-2 text-xs text-slate-500">
+          Scroll to zoom, drag to pan, click a node for full details.
+        </p>
+        <div
+          id="node-details"
+          class="mt-3 hidden rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm whitespace-pre-wrap font-mono text-slate-300"
+        ></div>
+        <script id="graph-data" type="application/json">{"nodes": [], "edges": []}</script>
       </section>
 
     </main>
 
     <footer class="mx-auto max-w-6xl px-6 py-6 text-xs text-slate-600">
-      Generated dashboard template — wire up data sources for live status.
+      Generated by the Visualping Crawler Challenge report engine.
     </footer>
   </div>
+
+  <script>
+    lucide.createIcons();
+
+    let network = null;
+
+    // Render (or re-render, on live refresh) the link graph from
+    // {nodes, edges} data as an interactive vis-network graph.
+    function renderGraph(graphData) {
+      const container = document.getElementById("link-graph");
+      document.getElementById("node-details").classList.add("hidden");
+
+      if (network) {
+        network.destroy();
+        network = null;
+      }
+      if (!graphData || !graphData.nodes || graphData.nodes.length === 0) {
+        return;
+      }
+
+      const nodes = new vis.DataSet(graphData.nodes);
+      const edges = new vis.DataSet(graphData.edges || []);
+
+      network = new vis.Network(
+        container,
+        { nodes: nodes, edges: edges },
+        {
+          // Zoom (scroll wheel) and pan (click-drag) are vis-network's
+          // default interaction behavior; explicit here for clarity.
+          interaction: { zoomView: true, dragView: true, hover: true },
+          physics: { stabilization: true },
+          edges: { arrows: "to", color: { color: "#475569" } },
+        }
+      );
+
+      // Click-to-view: show the clicked node's full tooltip details
+      // (already built server-side by graph_formatter._build_tooltip)
+      // in the details panel below the graph.
+      network.on("click", function (params) {
+        const detailsPanel = document.getElementById("node-details");
+        if (params.nodes.length === 0) {
+          detailsPanel.classList.add("hidden");
+          return;
+        }
+        const node = nodes.get(params.nodes[0]);
+        detailsPanel.textContent = node.title;
+        detailsPanel.classList.remove("hidden");
+      });
+    }
+
+    // Parse the graph data injected into the #graph-data script tag by
+    // the server-rendered template, and draw it immediately so the page
+    // still works even if the live API below is unreachable (e.g. the
+    // page was opened directly from disk rather than via `serve.py`).
+    const graphDataElement = document.getElementById("graph-data");
+    renderGraph(JSON.parse(graphDataElement.textContent || "{}"));
+
+    // Rebuild the secrets table body from scratch using text-only DOM
+    // APIs (never innerHTML/insertAdjacentHTML): each field originates
+    // from crawled, untrusted page content, so textContent is what keeps
+    // this immune to the same XSS risk render_report's HTML-escaping
+    // guards against server-side.
+    function renderSecretsTable(secrets) {
+      const tbody = document.getElementById("secrets-table-body");
+      tbody.textContent = "";
+
+      if (!secrets || secrets.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 4;
+        cell.className = "px-4 py-3 text-slate-500";
+        cell.textContent = "No secrets discovered.";
+        row.appendChild(cell);
+        tbody.appendChild(row);
+        return;
+      }
+
+      const columnClasses = [
+        "px-4 py-3 font-mono text-rose-300",
+        "px-4 py-3",
+        "px-4 py-3 break-all",
+        "px-4 py-3 text-slate-400",
+      ];
+
+      for (const secret of secrets) {
+        const row = document.createElement("tr");
+        const values = [secret.value, secret.location, secret.url, secret.snippet];
+        values.forEach((value, index) => {
+          const cell = document.createElement("td");
+          cell.className = columnClasses[index];
+          cell.textContent = value;
+          row.appendChild(cell);
+        });
+        tbody.appendChild(row);
+      }
+    }
+
+    function renderKpis(data) {
+      document.getElementById("kpi-pages-scanned").textContent = data.total_pages_scanned;
+      document.getElementById("kpi-secrets-found").textContent = data.total_secrets_found;
+      document.getElementById("kpi-links-discovered").textContent = data.total_links_discovered;
+      document.getElementById("kpi-max-depth").textContent = data.max_crawl_depth;
+      document.getElementById("generated-at").textContent = data.generated_at;
+      document.getElementById("start-time").textContent = data.start_time;
+      document.getElementById("end-time").textContent = data.end_time;
+    }
+
+    function applyReportData(data) {
+      renderKpis(data);
+      renderSecretsTable(data.secrets);
+      renderGraph(data.graph);
+    }
+
+    // On load (and therefore on every browser refresh), pull the latest
+    // persisted results from the live server and refresh the DOM. This
+    // is a no-op failure if the page isn't being served by `serve.py`
+    // (e.g. opened straight from disk) -- the server-rendered content
+    // above is left in place either way.
+    async function fetchLatestResults() {
+      try {
+        const response = await fetch("/api/secrets");
+        if (!response.ok) {
+          return;
+        }
+        applyReportData(await response.json());
+      } catch (err) {
+        console.warn("Live results unavailable; showing the last generated report.", err);
+      }
+    }
+
+    // "Re-scan" runs the crawl pipeline on demand via POST /api/scan,
+    // rather than on every page load, since a full crawl makes real
+    // outbound network requests and can take a while.
+    const rescanButton = document.getElementById("rescan-btn");
+    const scanStatus = document.getElementById("scan-status");
+
+    rescanButton.addEventListener("click", async () => {
+      rescanButton.disabled = true;
+      scanStatus.textContent = "Scanning…";
+      try {
+        const response = await fetch("/api/scan", { method: "POST" });
+        if (!response.ok) {
+          scanStatus.textContent = "Scan failed. See server logs.";
+          return;
+        }
+        applyReportData(await response.json());
+        scanStatus.textContent = "Scan complete.";
+      } catch (err) {
+        console.error("Re-scan request failed.", err);
+        scanStatus.textContent = "Scan failed: server unreachable.";
+      } finally {
+        rescanButton.disabled = false;
+      }
+    });
+
+    fetchLatestResults();
+  </script>
 </body>
 </html>
