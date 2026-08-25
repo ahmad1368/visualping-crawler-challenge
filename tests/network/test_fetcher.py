@@ -70,3 +70,39 @@ class TestCreateHttpClient:
 
         with pytest.raises(httpx.ConnectError):
             _run(scenario())
+
+    def test_sends_basic_auth_credentials_when_configured(self):
+        received_auth_header: dict[str, str] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            received_auth_header["value"] = request.headers.get("authorization", "")
+            return httpx.Response(200)
+
+        async def scenario() -> None:
+            client = create_http_client(
+                transport=httpx.MockTransport(handler), auth=("ahmad", "s3cr3t")
+            )
+            try:
+                await client.get("https://example.com")
+            finally:
+                await client.aclose()
+
+        _run(scenario())
+        assert received_auth_header["value"].startswith("Basic ")
+
+    def test_omits_auth_header_when_auth_not_configured(self):
+        received_auth_header: dict[str, str] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            received_auth_header["value"] = request.headers.get("authorization", "")
+            return httpx.Response(200)
+
+        async def scenario() -> None:
+            client = create_http_client(transport=httpx.MockTransport(handler))
+            try:
+                await client.get("https://example.com")
+            finally:
+                await client.aclose()
+
+        _run(scenario())
+        assert received_auth_header["value"] == ""
