@@ -4,9 +4,13 @@ Scans HTTP response headers, cookies, and script content (inline
 `<script>` tags or the already-fetched body of a linked JS/CSS asset)
 for embedded secrets, recording the exact header name or cookie key that
 carried the secret directly in the finding's context snippet.
+`extract_asset_urls` locates the linked JS/CSS assets in the first
+place, so a caller can fetch and scan them.
 """
 
 from __future__ import annotations
+
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
@@ -57,3 +61,40 @@ def scan_inline_scripts(html_body: str, url: str) -> list[Secret]:
     soup = BeautifulSoup(html_body, "html.parser")
     script_text = "\n".join(script.get_text() for script in soup.find_all("script"))
     return scan_script(script_text, url=url)
+
+
+def extract_asset_urls(html_body: str, base_url: str) -> list[str]:
+    """Extract linked JS/CSS asset URLs from an HTML document.
+
+    Finds every `<script src="...">` and `<link rel="stylesheet"
+    href="...">` reference, resolves each to an absolute URL against
+    `base_url`, and deduplicates while preserving first-seen order.
+    Fetching and scanning the returned URLs is the caller's
+    responsibility -- this function only locates them.
+    """
+    soup = BeautifulSoup(html_body, "html.parser")
+
+    seen: set[str] = set()
+    urls: list[str] = []
+
+    for tag in soup.find_all("script", src=True):
+        _add_asset_url(urls, seen, tag["src"], base_url)
+
+    for tag in soup.find_all("link", rel="stylesheet", href=True):
+        _add_asset_url(urls, seen, tag["href"], base_url)
+
+    return urls
+
+
+def _add_asset_url(urls: list[str], seen: set[str], raw_url: str, base_url: str) -> None:
+    """Resolve `raw_url` to an absolute URL and append it if not already seen."""
+    raw_url = raw_url.strip()
+    if not raw_url:
+        return
+
+    absolute_url = urljoin(base_url, raw_url)
+    if absolute_url in seen:
+        return
+
+    seen.add(absolute_url)
+    urls.append(absolute_url)

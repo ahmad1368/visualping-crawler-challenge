@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsers.route_finder import find_routes
+from parsers.route_finder import find_routes, find_routes_in_html
 
 
 class TestFindRoutes:
@@ -65,3 +65,48 @@ class TestFindRoutes:
     def test_raises_on_blank_base_url(self):
         with pytest.raises(ValueError):
             find_routes("/api/v1/route", base_url="   ")
+
+
+class TestFindRoutesInHtml:
+    """Success and failure scenarios for find_routes_in_html."""
+
+    def test_does_not_mistake_closing_tags_for_routes(self):
+        # Regression test: applying find_routes directly to raw HTML
+        # markup (rather than extracted text) previously matched a
+        # closing tag like "</a>" as the route "/a", since the regex
+        # has no notion of markup vs. plain text. A normal <a href>
+        # link is not a "hidden" route (extract_links already finds
+        # it), so nothing should be found here -- least of all a
+        # spurious "/a" from the closing tag.
+        html = '<a href="/child">child</a>'
+        routes = find_routes_in_html(html, base_url="https://example.com")
+        assert routes == []
+
+    def test_finds_route_in_inline_script(self):
+        html = '<body><script>fetch("/api/hidden-route");</script></body>'
+        routes = find_routes_in_html(html, base_url="https://example.com")
+        assert routes == ["https://example.com/api/hidden-route"]
+
+    def test_finds_route_in_html_comment(self):
+        html = "<body><!-- debug endpoint: /internal/debug --></body>"
+        routes = find_routes_in_html(html, base_url="https://example.com")
+        assert routes == ["https://example.com/internal/debug"]
+
+    def test_finds_route_in_visible_body_text(self):
+        html = "<body><p>See /docs/getting-started for details.</p></body>"
+        routes = find_routes_in_html(html, base_url="https://example.com")
+        assert routes == ["https://example.com/docs/getting-started"]
+
+    def test_ignores_route_like_text_inside_style_tag(self):
+        html = '<body><style>/* not a route: /fake/path */</style></body>'
+        routes = find_routes_in_html(html, base_url="https://example.com")
+        assert routes == []
+
+    def test_returns_empty_list_for_html_with_no_routes(self):
+        html = "<body><p>Nothing here.</p></body>"
+        routes = find_routes_in_html(html, base_url="https://example.com")
+        assert routes == []
+
+    def test_returns_empty_list_for_empty_html(self):
+        routes = find_routes_in_html("", base_url="https://example.com")
+        assert routes == []
