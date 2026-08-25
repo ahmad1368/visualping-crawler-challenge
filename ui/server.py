@@ -14,11 +14,19 @@ page can be served live instead of only via `python main.py`:
   -- this is the only route that triggers new outbound network
   requests; visiting or refreshing `/` on its own only reads the
   latest already-persisted results.
+
+Also applies `_cors_middleware` to the two `/api/*` routes, since the
+generated `index.html` is a static file that can end up served by
+something other than this app (e.g. an editor's static preview server
+on a different port) while its client-side script still calls back
+into this API -- a cross-origin request the browser will only allow
+once this server sends back a matching `Access-Control-Allow-Origin`.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 
 from aiohttp import web
 
@@ -28,6 +36,34 @@ from storage.data_loader import load_results
 from ui.reporter import DEFAULT_OUTPUT_PATH, build_report_payload, generate_report
 
 logger = logging.getLogger(__name__)
+
+# Matches an `Origin` header from a browser tab served over plain HTTP from
+# the local machine, regardless of port (e.g. an editor's static preview
+# server) -- the only kind of cross-origin caller this local dev tool grants
+# access to.
+_LOCAL_ORIGIN_PATTERN = re.compile(r"^http://(localhost|127\.0\.0\.1)(:\d+)?$")
+
+
+@web.middleware
+async def _cors_middleware(request: web.Request, handler):
+    """Allow cross-origin `/api/*` requests from another local dev server.
+
+    The generated report page is a static file and may be previewed via
+    something other than this app (see module docstring), so its own
+    origin won't always match this server's. Reflects the request's
+    `Origin` back as `Access-Control-Allow-Origin` when it's a plain-HTTP
+    localhost/127.0.0.1 origin (any port); every other origin is left
+    without the header, so the browser's default same-origin policy
+    still applies.
+    """
+    response = await handler(request)
+
+    origin = request.headers.get("Origin")
+    if origin and _LOCAL_ORIGIN_PATTERN.match(origin):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
+
+    return response
 
 
 async def handle_index(request: web.Request) -> web.Response:
@@ -73,7 +109,7 @@ async def handle_api_scan(request: web.Request) -> web.Response:
 
 def create_app() -> web.Application:
     """Build the aiohttp application with the report page and API routes registered."""
-    app = web.Application()
+    app = web.Application(middlewares=[_cors_middleware])
     app.router.add_get("/", handle_index)
     app.router.add_get("/api/secrets", handle_api_secrets)
     app.router.add_post("/api/scan", handle_api_scan)

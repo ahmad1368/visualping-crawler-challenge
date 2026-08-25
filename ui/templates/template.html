@@ -126,6 +126,14 @@
   <script>
     lucide.createIcons();
 
+    // The server's own origin, injected server-side (ui/reporter.py) from
+    // core.config.APP_PORT. Always used for API calls -- rather than a
+    // relative path -- since this static page can end up served by
+    // something other than ui/server.py (e.g. an editor's static preview
+    // server on a different port), in which case a relative fetch would
+    // silently hit that other server instead.
+    const API_BASE = "{{ API_BASE_URL }}";
+
     let network = null;
 
     // Render (or re-render, on live refresh) the link graph from
@@ -242,7 +250,7 @@
     // above is left in place either way.
     async function fetchLatestResults() {
       try {
-        const response = await fetch("/api/secrets");
+        const response = await fetch(`${API_BASE}/api/secrets`);
         if (!response.ok) {
           return;
         }
@@ -262,7 +270,7 @@
       rescanButton.disabled = true;
       scanStatus.textContent = "Scanning…";
       try {
-        const response = await fetch("/api/scan", { method: "POST" });
+        const response = await fetch(`${API_BASE}/api/scan`, { method: "POST" });
         if (!response.ok) {
           scanStatus.textContent = "Scan failed. See server logs.";
           return;

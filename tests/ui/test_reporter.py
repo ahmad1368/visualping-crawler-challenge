@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 
+from core import config
 from core.models import CrawledNode, Edge, Secret, SecretLocation
 from storage.exporter import build_report
 from storage.persistence import write_json_atomic
@@ -17,6 +18,7 @@ MINIMAL_TEMPLATE = (
     " {{ MAX_CRAWL_DEPTH }}</p>"
     "<table><tbody>{{ SECRETS_TABLE_ROWS }}</tbody></table>"
     "<script>{{ GRAPH_DATA_JSON }}</script>"
+    "<script>const API_BASE = \"{{ API_BASE_URL }}\";</script>"
     "</body></html>"
 )
 
@@ -86,6 +88,11 @@ class TestRenderReport:
         rendered = render_report(report, MINIMAL_TEMPLATE)
         assert "<script>alert" not in rendered
         assert "&lt;script&gt;" in rendered
+
+    def test_fills_api_base_url_from_config(self):
+        report = build_report(secrets=[], nodes=[], edges=[], start_time=START, end_time=END)
+        rendered = render_report(report, MINIMAL_TEMPLATE)
+        assert f'"http://localhost:{config.APP_PORT}"' in rendered
 
     def test_includes_secret_location_value(self):
         secret = Secret(
