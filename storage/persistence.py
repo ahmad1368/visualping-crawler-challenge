@@ -87,6 +87,11 @@ class ResultsWriter:
     in memory, and atomically rewrites the entire results file every
     time `record_secret` is called, so a secret found midway through a
     long crawl is already durable on disk before the crawl continues.
+
+    `record_node`/`record_edge` do not trigger a flush on every call, so
+    callers must call `flush()` once after the crawl finishes to persist
+    a run's nodes/edges when it recorded zero secrets (otherwise nothing
+    would ever be written to disk for a clean crawl).
     """
 
     def __init__(self, path: Path | str = DEFAULT_RESULTS_PATH) -> None:
@@ -109,7 +114,7 @@ class ResultsWriter:
     def record_secret(self, secret: Secret) -> bool:
         """Record a newly discovered secret and persist the results file immediately."""
         self._secrets.append(secret)
-        return self._flush()
+        return self.flush()
 
     def record_node(self, node: CrawledNode) -> None:
         """Record a visited page as a graph node, without triggering a flush."""
@@ -119,8 +124,19 @@ class ResultsWriter:
         """Record a discovered link as a graph edge, without triggering a flush."""
         self._edges.append(edge)
 
-    def _flush(self) -> bool:
-        """Atomically write the current in-memory results to disk."""
+    def flush(self) -> bool:
+        """Atomically write the current in-memory results to disk.
+
+        `record_secret` already calls this after every new secret, so a
+        crawl that finds anything is durable on disk throughout. But
+        `record_node`/`record_edge` intentionally do not flush on every
+        call (that would mean a full atomic rewrite per page, even on
+        large crawls with no findings), so a caller must call this once
+        after the crawl finishes to persist nodes/edges recorded on a
+        run that found zero secrets -- otherwise those pages and links
+        are never written at all, and `data_loader.load_results` has
+        nothing to load.
+        """
         report = build_report(
             secrets=self._secrets,
             nodes=self._nodes,
