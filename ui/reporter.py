@@ -19,6 +19,7 @@ import json
 import logging
 from pathlib import Path
 
+from core import config
 from storage.data_loader import load_results
 from storage.exporter import CrawlReport
 from storage.persistence import write_text_atomic
@@ -46,6 +47,14 @@ def render_report(report: CrawlReport, template_html: str) -> str:
     Each secret field is HTML-escaped, since it originates from crawled,
     untrusted page content and is otherwise inserted verbatim into the
     output page.
+
+    `{{ API_BASE_URL }}` is filled in with the live server's own origin
+    (`http://localhost:<core.config.APP_PORT>`) rather than left as a
+    relative path, since the rendered page is a static file: it can be
+    (and during development often is) served by something else, such as
+    an editor's static preview server on a different port, in which
+    case relative `fetch("/api/...")` calls would silently hit that
+    other server instead of `ui.server`.
     """
     max_depth = _max_crawl_depth(report)
 
@@ -59,6 +68,7 @@ def render_report(report: CrawlReport, template_html: str) -> str:
         "{{ MAX_CRAWL_DEPTH }}": str(max_depth),
         "{{ SECRETS_TABLE_ROWS }}": _render_secrets_rows(report),
         "{{ GRAPH_DATA_JSON }}": _render_graph_data(report),
+        "{{ API_BASE_URL }}": f"http://localhost:{config.APP_PORT}",
     }
 
     rendered = template_html

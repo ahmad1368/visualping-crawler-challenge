@@ -30,6 +30,7 @@ REQUIRED_PLACEHOLDERS: tuple[str, ...] = (
     "{{ MAX_CRAWL_DEPTH }}",
     "{{ SECRETS_TABLE_ROWS }}",
     "{{ GRAPH_DATA_JSON }}",
+    "{{ API_BASE_URL }}",
 )
 
 
