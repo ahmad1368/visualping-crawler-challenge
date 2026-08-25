@@ -16,8 +16,8 @@
         <div class="flex-1">
           <h1 class="text-2xl font-semibold tracking-tight">Visualping Crawler Report</h1>
           <p class="mt-1 text-sm text-slate-400">
-            Generated <span id="generated-at">2026-08-25T04:46:31.455851+00:00</span> — crawl window
-            <span id="start-time">2026-08-25T04:46:31.455851+00:00</span> to <span id="end-time">2026-08-25T04:46:31.455851+00:00</span>
+            Generated <span id="generated-at">2026-08-25T05:56:46.913722+00:00</span> — crawl window
+            <span id="start-time">2026-08-25T05:56:42.707342+00:00</span> to <span id="end-time">2026-08-25T05:56:46.913722+00:00</span>
           </p>
         </div>
         <div class="text-right">
@@ -44,7 +44,7 @@
               <i data-lucide="file-text" class="w-4 h-4"></i>
               Pages Scanned
             </div>
-            <p id="kpi-pages-scanned" class="mt-2 text-3xl font-semibold">0</p>
+            <p id="kpi-pages-scanned" class="mt-2 text-3xl font-semibold">1</p>
           </div>
           <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
             <div class="flex items-center gap-2 text-slate-400 text-sm">
@@ -113,7 +113,7 @@
           id="node-details"
           class="mt-3 hidden rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm whitespace-pre-wrap font-mono text-slate-300"
         ></div>
-        <script id="graph-data" type="application/json">{"nodes": [], "edges": []}</script>
+        <script id="graph-data" type="application/json">{"nodes": [{"id": "https://challenge.visualping.io", "label": "challenge.visualping.io", "title": "https://challenge.visualping.io\nDepth: 0", "color": "#38bdf8", "shape": "dot"}], "edges": []}</script>
       </section>
 
     </main>
@@ -125,6 +125,20 @@
 
   <script>
     lucide.createIcons();
+
+    // The server's own origin, injected server-side (ui/reporter.py) from
+    // core.config.APP_PORT. Always used for API calls -- rather than a
+    // relative path -- since this static page can end up served by
+    // something other than ui/server.py (e.g. an editor's static preview
+    // server on a different port), in which case a relative fetch would
+    // silently hit that other server instead. Falls back to guessing
+    // "http://localhost:8000" if this page was ever served without going
+    // through generate_report() (so the "http://localhost:8000" token was
+    // never substituted) -- e.g. the raw template opened directly.
+    const _injectedApiBase = "http://localhost:8000";
+    const API_BASE = _injectedApiBase.startsWith("http")
+      ? _injectedApiBase
+      : (location.port === "8000" ? "" : "http://localhost:8000");
 
     let network = null;
 
@@ -242,7 +256,7 @@
     // above is left in place either way.
     async function fetchLatestResults() {
       try {
-        const response = await fetch("/api/secrets");
+        const response = await fetch(`${API_BASE}/api/secrets`);
         if (!response.ok) {
           return;
         }
@@ -262,7 +276,7 @@
       rescanButton.disabled = true;
       scanStatus.textContent = "Scanning…";
       try {
-        const response = await fetch("/api/scan", { method: "POST" });
+        const response = await fetch(`${API_BASE}/api/scan`, { method: "POST" });
         if (!response.ok) {
           scanStatus.textContent = "Scan failed. See server logs.";
           return;

@@ -131,8 +131,14 @@
     // relative path -- since this static page can end up served by
     // something other than ui/server.py (e.g. an editor's static preview
     // server on a different port), in which case a relative fetch would
-    // silently hit that other server instead.
-    const API_BASE = "{{ API_BASE_URL }}";
+    // silently hit that other server instead. Falls back to guessing
+    // "http://localhost:8000" if this page was ever served without going
+    // through generate_report() (so the "{{ API_BASE_URL }}" token was
+    // never substituted) -- e.g. the raw template opened directly.
+    const _injectedApiBase = "{{ API_BASE_URL }}";
+    const API_BASE = _injectedApiBase.startsWith("http")
+      ? _injectedApiBase
+      : (location.port === "8000" ? "" : "http://localhost:8000");
 
     let network = null;
 

@@ -67,6 +67,38 @@ class TestCorsMiddleware:
 
         _run(scenario())
 
+    def test_answers_preflight_options_for_a_local_origin_without_a_registered_route(self):
+        # No OPTIONS route is registered for /api/scan (only POST is) -- the
+        # middleware must answer the preflight itself rather than letting
+        # routing raise HTTPMethodNotAllowed.
+        async def scenario():
+            client = await _client(server_module.create_app())
+            try:
+                resp = await client.options(
+                    "/api/scan", headers={"Origin": "http://localhost:5500"}
+                )
+                assert resp.status == 204
+                assert resp.headers.get("Access-Control-Allow-Origin") == "http://localhost:5500"
+                assert "POST" in resp.headers.get("Access-Control-Allow-Methods", "")
+            finally:
+                await client.close()
+
+        _run(scenario())
+
+    def test_options_for_a_non_local_origin_gets_the_normal_405(self):
+        async def scenario():
+            client = await _client(server_module.create_app())
+            try:
+                resp = await client.options(
+                    "/api/scan", headers={"Origin": "https://evil.example.com"}
+                )
+                assert resp.status == 405
+                assert "Access-Control-Allow-Origin" not in resp.headers
+            finally:
+                await client.close()
+
+        _run(scenario())
+
 
 class TestHandleApiScan:
     """Success and failure scenarios for POST /api/scan."""
